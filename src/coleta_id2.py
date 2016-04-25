@@ -23,14 +23,16 @@ import requests
 import sys
 import os
 import time
-#from MongoDb import MyMongo as Classe
-
-from pymongo import MongoClient
-
+from MongoDb import MyMongo as Classe
 
 # conexao com o banco
-# job = Classe('db_nlm_api','tb_id')
-#job = Classe('nlmapi','tbid',host='mongodb.bireme.br')
+job = Classe('nlm_api','tb_id')
+# job = Classe('nlm_api','tb_id',host='mongodb.bireme.br')
+
+# Apaga temporariamente a coleção
+job.dropCollection()
+
+
 
 # URL utilizada para recolher total de registros
 URL_t = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=publisher[sb]&retmax=1&retmode=json'
@@ -92,31 +94,15 @@ nome_arq_id = 'ids.id'
 ## Fechando arquivo
 #id_file.close()
 
-# URL do servidor MongoDB
-mongoserver_uri = 'mongodb://localhost:27017'
 
-# Conexão com o banco
-connection = MongoClient(host=mongoserver_uri)
-
-# Banco de Dados
-db = connection['api_nlm']
-
-# Coleção
-# collection = db['tb_id']
 
 # Abrindo arquivo de ids para leitura
 file_read = open(nome_arq_id, 'r')
 
 for line in file_read:
-
     line = line.replace('\n','')
     print line
-#   job.saveDoc({'_id':line})
-
-    # collection.insert({'_id':line})
-    db.tb_id.insert_one({'_id':line})
-
-
+    job.saveDoc({'_id':line})
 
 # Fechando arquivo
 file_read.close()
