@@ -62,12 +62,12 @@ class NLM_API:
         return info
 
     def getDocIds(self,
-                  dbname,
-                  query,
+                  dbname="pubmed",
+                  query="pubstatusaheadofprint",
                   retmax=100,
                   retstart=0,
                   field=None,
-                  useHistory=True):
+                  useHistory=False):
         """
         dbname - database name
         query - expression used to retrieve the document ids
@@ -76,10 +76,11 @@ class NLM_API:
         field - if used narrow the search to that field
         useHistory - true if the retrieved ids should the stored in the server
                      for temporary and future use by efetch.
-        Returns the document ids that are retrieved by a query
+        Returns a tuple as follows:
+               (<#ofIds>, <webenv>, <querykey>, <list of the document ids that are retrieved by a query>)
         """
-        url = self.eutils + "/esearch.fcgi?db=" + dbname + "&term=" + query + /
-               "&retstart=" + str(retstart)
+        url = self.eutils + "/esearch.fcgi?db=" + dbname + "&term=" + query \
+                + "&retstart=" + str(retstart)
 
         if (useHistory):
             url = url + "&usehistory=y"
