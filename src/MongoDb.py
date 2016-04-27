@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 #=========================================================================
@@ -45,7 +46,7 @@ class MyMongo:
 
     def replaceDoc(self, doc):
         """
-        Replaces an exiting saved document by a ney one with the same _id field
+        Replaces an exiting saved document by a new one with the same _id field
         doc - mongo document represented as a dictionary
         Returns True if the replacement was ok or False if not
         """
