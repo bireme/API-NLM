@@ -24,10 +24,14 @@
 
 from LoadUrl import loadUrl
 from XML import MyXML
+from MongoDb import MyMongo
+from DocIterator import DocIterator
+import json,xmltodict,os
 
 class NLM_API:
     def __init__(self):
         self.eutils = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+
 
     def listDatabases(self):
         """
@@ -46,6 +50,7 @@ class NLM_API:
 
         return databases
 
+
     def listDatabaseFields(self, dbname):
         """
         Lists the fields of a database
@@ -61,10 +66,11 @@ class NLM_API:
 
         return info
 
+
     def getDocIds(self,
                   dbname="pubmed",
                   query="pubstatusaheadofprint",
-                  retmax=100,
+                  retmax=1000,
                   retstart=0,
                   field=None,
                   useHistory=False):
@@ -99,7 +105,7 @@ class NLM_API:
         if xmlRes[0] == 200:
             xml = MyXML(xmlRes[1])
             count = xml.getXPath("eSearchResult/Count")[0][0]
-            print("count=" + str(count))
+            #print("count=" + str(count))
             if (useHistory):
                 web = xml.getXPath("eSearchResult/WebEnv")[0][0]
                 key = xml.getXPath("eSearchResult/QueryKey")[0][0]
@@ -110,3 +116,162 @@ class NLM_API:
                     ids.append(id[0])
 
         return (count, web, key, ids)
+
+
+    def __insertDocId(self,
+                      idMyMongo,
+                      nowDate,
+                      docId):
+        """
+            Inserts an id document into collection "id"
+            idMyMongo - MyMongo object for collection "id"
+            nowDate - current date
+            docId - NLM document id
+            Returns True is it a new document False is it was already saved
+        """
+
+        doc = {"_id":docId, "status":"aheadofprint"}
+
+        # Check if the new document is already stored in Mongo
+        cursor = idMyMongo.search(doc)
+        isNew = cursor.count() == 0
+
+        if isNew:  #new document
+            doc["firstHarvesting"] = nowDate
+        else:
+            doc = cursor[0]
+        doc["lastHarvesting"] = nowDate
+
+        # Update id onto mongo
+        idMyMongo.replaceDoc(doc)
+
+        return isNew
+
+
+    def __xmlToFile(self,
+                    docId,
+                    xml,
+                    dir=".",
+                    encoding="UTF-8",
+                    includeXmlHeader=True):
+        """
+        Writes the xml document into a file
+        docId - NLM document id
+        xml - string having xml content
+        dir - output file directory
+        encoding - output file encoding
+        """
+        header = '<?xml version="1.0" encoding="UTF-8"?>'
+        fname = str(docId) + ".xml"
+
+        xdir = dir.strip()
+        if not xdir.endswith("/"):
+            xdir += "/"
+
+        f = open(xdir+fname, mode="w", encoding=encoding)
+        if includeXmlHeader:
+            f.write(header + '\n')
+        f.write(xml)
+        f.close()
+
+
+    def insertDocs(self,
+                   nowDate,
+                   idMyMongo,
+                   xmlMyMongo,
+                   ids,
+                   xdir=".",
+                   encoding="UTF-8",
+                   verbose=False):
+        """
+        For each id from a list of ids, adds a new id document into mongo id
+        collection, add a new document into mongo xml collection and creates a
+        new file with xml content.
+        nowDate - current date
+        idMyMongo - MyMongo object for collection "id"
+        xmlMyMongo - MyMongo object for collection "xml"
+        ids - a list of NLM document ids
+        xdir - output file directory
+        encoding - output file encoding
+        verbose - if True prints the document is inserted
+        """
+
+        newDocs = []
+        id_size = len(ids)
+
+        for id_ in ids:
+            # Insert id document into collection "id"
+            isNewDoc = self.__insertDocId(idMyMongo, nowDate, id_)
+            if isNewDoc:
+                newDocs.append(id_)
+            if (verbose):
+                status = "[New]" if isNewDoc else "[Already processed]"
+                print("Document id:" + str(id_) + " " + status)
+
+        #input("Press Enter to continue...")
+
+
+        if len(newDocs) > 0:
+            if verbose:
+                print("Loading and saving " + str(id_size) + " documents: ",
+                                                             end="", flush=True)
+
+            diter = DocIterator(newDocs)
+
+            for dId in diter:
+                docId = dId[0]
+                xml = dId[1]
+
+                # Save xml content into mongo and file
+                docDict = xmltodict.parse(xml)
+                doc = {"_id":docId, "date":nowDate, "doc":docDict}
+                xmlMyMongo.saveDoc(doc)                      # save into mongo
+                self.__xmlToFile(docId, xml, xdir, encoding)    # save into file
+
+            if verbose:
+                print()  # to print a new line
+
+    def changeDocStatus(self,
+                        nowDate,
+                        idMyMongo,
+                        xmlMyMongo,
+                        xmlDir="."
+                        delXmlDoc=True,
+                        verbose=False):
+        """
+        Changes the document status from "aheadofprint" to "published"
+        nowDate - current date
+        idMyMongo - MyMongo object for collection "id"
+        xmlMyMongo - MyMongo object for collection "xml"
+        delXmlDoc - if True deletes document from collection "xml"
+        verbose - if True prints document id into standard output
+        """
+
+        # All documents whose lastHarvesting is lower than nowDate
+        query = {"lt":{"lastHarvesting":nowDate}}
+
+        cursor = idMyMongo.search(query)
+
+        for doc in cursor:
+            doc.lastHarvesting = nowDate
+            doc.status = "published"
+
+            idMyMongo.replaceDoc(doc) # update id mongo doc
+
+            id_ = doc._id
+
+            if delXmlDoc:
+                xmlMyMongo.deleteDoc(id_)   # delete xml mongo doc
+
+                xdir = xmlDir.strip()
+                if not xdir.endswith("/"):
+                    xdir += "/"
+                xdir += id_ + ".xml"
+                try:
+                    os.remove(filename)
+                except OSError:
+                    pass
+
+            if verbose:
+                xstr = " xml deleted." if delXmlDoc else ""
+                print("doc[" + id_ + "] status changed." + xstr)
