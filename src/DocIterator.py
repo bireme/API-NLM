@@ -31,7 +31,8 @@ class DocIterator:
                  dbName="pubmed",
                  retType="MEDLINE",
                  retMode="XML",
-                 xpathSplit="PubmedArticleSet/PubmedArticle"):
+                 xpathSplit="PubmedArticleSet/PubmedArticle",
+                 verbose=True):
         """
             ids - list of xml document ids to be downloaded
             dbName - database  name
@@ -39,12 +40,16 @@ class DocIterator:
             retMode - see efetch 'retmode' documentation
             xpathSplit - the xpath expression used to extract the desired xml
                          documents from the big one downloaded with efetch
+            verbose - if True print a dot in the standard output when a block is loaded
         """
         base = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
-        size = 50
+        size = 50 #100
 
         self.ids = ids
         self.total = len(ids)
+        if self.total == 0:
+            raise Exception("Empty id list")
+
         self.blockSize =  size if self.total > size else self.total
         self.lastBlock = (self.total / self.blockSize) - 1
         self.curBlock = 0
@@ -54,7 +59,9 @@ class DocIterator:
         self.url = base
         self.postParam = {"db":dbName, "retmax":str(self.blockSize),
                           "rettype":retType, "retmode":retMode}
+        self.verbose = verbose
         self.__loadBlock(0)
+
 
     def __iter__(self):
         """
@@ -62,14 +69,15 @@ class DocIterator:
         """
         return self
 
+
     def __next__(self):
         """
-        Returns the next downloaded document
+        Returns the next pair (<id>,<downloaded xml document>)
         """
         #print("entra no next")
         xml = None
         if self.curBlkPos <= len(self.xmlBlock) - 1:
-            xml = self.xmlBlock[self.curBlkPos].strip()
+            xml = self.xmlBlock[self.curBlkPos]
             self.curBlkPos += 1
         else:
             if self.curBlock < self.lastBlock:
@@ -81,25 +89,32 @@ class DocIterator:
         #print("sai do next")
         return xml
 
+
     def __loadBlock(self,
                     blkNumber):
         """
         Loads the document buffer with the next documents.
         blkNumber - the block number to be downloaded (initial block is 0)
         """
+
+        if self.verbose:
+            print('.', end="", flush=True)
+
         block = []
         retStart = blkNumber * self.blockSize
         if retStart < self.total:
-            self.postParam["id"] = self.__getIds(retStart)
+            pair = self.__getIds(retStart)
+            self.postParam["id"] = pair[1]
             xmlRes = loadUrl(self.url, post_values=self.postParam)
             del self.postParam["id"]
             if xmlRes[0] == 200:
                 #print("res=" + str(xmlRes[1]))
-                block = self.__splitBlock(xmlRes[1])
+                block = self.__splitBlock(pair[0], xmlRes[1])
                 self.curBlock = blkNumber
                 self.curBlkPos = 0
             else:
-                print("ErrCode:" + str(xmlRes[0]) + " url=" + urlf + "\n")
+                raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" /
+                                  + xmlRes[1] + " url:" + self.url)
         else:
             raise StopIteration()
 
@@ -107,32 +122,37 @@ class DocIterator:
         #print("tamanho do bloco: " + str(len(self.xmlBlock)))
 
     def __splitBlock(self,
+                     ids,
                      xml):
         """
         Extracts from the downloaded content the desired documents using the
         xpathSplit xpath expression
 
+        ids = list of document ids
         xml - the downloaded xml to be splited
-        Returns a list of xml documents
+        Returns a list of pairs (<id>, <xml document>)
         """
-
         ret = []
+        idx = 0
         mxml = MyXML(xml)
         elems = mxml.getXPathElements(self.xpath)
         for elem in elems:
-            ret.append(mxml.getTreeString(elem))
+            ret.append((ids[idx], mxml.getTreeString(elem).strip()))
+            idx += 1
         #s = str(len(ret))
         #print("size=" + s)
         return ret
+
 
     def __getIds(self,
                  retStart):
         """
         Retrieves the next ids to be used to download the xml documents
         retStart - the initial id position
-        Returns the list of next ids
+        Returns a pair (<list of ids>, <string with next ids>)
         """
-        ret = ""
+        ids_ = []
+        strg = ""
         last = min(retStart + self.blockSize, self.total)
         first = True
 
@@ -140,7 +160,9 @@ class DocIterator:
             if first:
                 first = False
             else:
-                ret += ","
-            ret += str(self.ids[idx])
+                strg += ","
+            id = self.ids[idx]
+            ids_.append(id)
+            strg += str(id)
 
-        return ret
+        return (ids_,strg)

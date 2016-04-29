@@ -48,10 +48,9 @@ class MyMongo:
         """
         Replaces an exiting saved document by a new one with the same _id field
         doc - mongo document represented as a dictionary
-        Returns True if the replacement was ok or False if not
         """
         _id = {'_id' : doc['_id']}
-        return (self.col.replace_one(_id, doc).modified_count == 1)
+        self.col.replace_one(_id, doc, upsert=True)
 
     def loadDoc(self, id):
         """
@@ -124,3 +123,14 @@ class MyMongo:
         """
 
         self.db.drop_collection(self.col)
+
+    def search(self,
+               query=None,
+               retFldNames=None):
+        """
+        Searches documents
+        query - map with field/value elements
+        retFldName - list of field names returned into retrieved documents
+        Returns an iterable of documents
+        """
+        return self.col.find(query, retFldNames)
