@@ -113,7 +113,8 @@ class DocIterator:
                 self.curBlock = blkNumber
                 self.curBlkPos = 0
             else:
-                raise Exception("ErrCode:" + str(xmlRes[0]) + " url=" + self.url)
+                raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" /
+                                  + xmlRes[1] + " url:" + self.url)
         else:
             raise StopIteration()
 

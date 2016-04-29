@@ -235,7 +235,7 @@ class NLM_API:
                         nowDate,
                         idMyMongo,
                         xmlMyMongo,
-                        xmlDir="."
+                        xmlDir=".",
                         delXmlDoc=True,
                         verbose=False):
         """
