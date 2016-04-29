@@ -26,8 +26,8 @@ import time
 from MongoDb import MyMongo as Classe
 
 # conexao com o banco
-job = Classe('nlm_api','tb_id')
-# job = Classe('nlm_api','tb_id',host='mongodb.bireme.br')
+job = Classe('db_pubmed_aheadofprint','col_id')
+# job = Classe('db_pubmed_aheadofprint','col_id',host='mongodb.bireme.br')
 
 # Apaga temporariamente a coleção
 job.dropCollection()
@@ -61,7 +61,7 @@ nome_arq_id = 'ids.id'
 
 
 ### Abrindo novo arquivo para gravacao
-#id_file = open(nome_arq_id, 'a')
+#id_file = open(nome_arq_id, 'w')
 #
 #COUNT = 0
 #while (COUNT <= total_ids ):
