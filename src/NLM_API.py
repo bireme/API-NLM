@@ -213,7 +213,7 @@ class NLM_API:
 
         if len(newDocs) > 0:
             if verbose:
-                print("Loading and saving " + str(id_size) + " documents: ",
+                print("Downloading and saving " + str(id_size) + " documents: ",
                                                              end="", flush=True)
 
             diter = DocIterator(newDocs)

@@ -24,6 +24,7 @@
 
 from LoadUrl import loadUrl
 from XML import MyXML
+import time
 
 class DocIterator:
     def __init__(self,
@@ -91,13 +92,16 @@ class DocIterator:
 
 
     def __loadBlock(self,
-                    blkNumber):
+                    blkNumber,
+                    curExec=1):
         """
         Loads the document buffer with the next documents.
         blkNumber - the block number to be downloaded (initial block is 0)
+        curExec - number of times that this function is trying to execute
+                  because a download exception.
         """
 
-        if self.verbose:
+        if (self.verbose and curExec == 1):
             print('.', end="", flush=True)
 
         block = []
@@ -113,8 +117,12 @@ class DocIterator:
                 self.curBlock = blkNumber
                 self.curBlkPos = 0
             else:
-                raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" /
-                                  + xmlRes[1] + " url:" + self.url)
+                if curExec < 4: # waits 60 seconds and try again
+                    time.sleep(60)
+                    self.__loadBlock(blkNumber, curExec + 1)
+                else:
+                    raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +/
+                                 xmlRes[1] + " url:" + self.url)
         else:
             raise StopIteration()
 
