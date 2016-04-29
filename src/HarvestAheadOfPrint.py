@@ -30,11 +30,20 @@ import os
 import datetime
 
 class HarvestAheadOfPrint:
-    def __init__(self):
-        self.host = "localhost"
-        self.db = "db_pubmed_aheadofprint"
-        self.col_id = "col_id"
-        self.col_xml = "col_xml"
+    def __init__(self, database, collection_id, collection_xml, host="localhost", port=27017):
+        """
+        database - the mongo database name
+        collection_id - the id collection name
+        collection_xml - the xml collection name
+        host - url of the mongo server host
+        port - mongo server port
+        """
+        self.db = database
+        self.col_id = collection_id
+        self.col_xml = collection_xml
+        self.host = host
+        self.port = port
+
 
     def harvestInsert(self):
 
@@ -75,8 +84,6 @@ class HarvestAheadOfPrint:
 
             count = count + 10
 
-
-# from HarvestAheadOfPrint import HarvestAheadOfPrint
-h = HarvestAheadOfPrint()
+h = HarvestAheadOfPrint("db_pubmed_aheadofprint", "cold_id", "col_xml")
 do = h.harvestInsert()
 
