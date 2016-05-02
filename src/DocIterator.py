@@ -101,8 +101,11 @@ class DocIterator:
                   because a download exception.
         """
 
-        if (self.verbose and curExec == 1):
-            print('.', end="", flush=True)
+        if self.verbose:
+            if curExec == 1:
+                print('.', end="", flush=True)
+            else:
+                print('+', end="", flush=True)
 
         block = []
         retStart = blkNumber * self.blockSize
@@ -121,8 +124,8 @@ class DocIterator:
                     time.sleep(60)
                     self.__loadBlock(blkNumber, curExec + 1)
                 else:
-                    raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +/
-                                 xmlRes[1] + " url:" + self.url)
+                    raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" /
+                                 + xmlRes[1] + " url:" + self.url)
         else:
             raise StopIteration()
 

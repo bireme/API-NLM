@@ -24,6 +24,8 @@
 
 import xml.etree.ElementTree as ET
 
+__date__ = 20160418
+
 class MyXML:
     def __init__(self,
                  xmlStr):

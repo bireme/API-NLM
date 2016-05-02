@@ -25,8 +25,14 @@
 import pymongo
 from pymongo import MongoClient
 
+__date__ = 20160418
+
 class MyMongo:
-    def __init__(self, database, collection, host="localhost", port=27017):
+    def __init__(self,
+                 database,
+                 collection,
+                 host="localhost", 
+                 port=27017):
         """
         database - the mongo database name
         collection - the collection name

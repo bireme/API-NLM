@@ -24,5 +24,20 @@
 
 from NLM_AheadOfPrint import NLM_AheadOfPrint
 
-ahead = NLM_AheadOfPrint("ts01vm.bireme.br", "db_AheadOfPrint", "col_Id", "col_Xml", "../xml")
+ahead = NLM_AheadOfPrint("ts01vm.bireme.br",
+                         "db_AheadOfPrint",
+                         "col_Id",
+                         "col_Xml",
+                         "../xml")
+
+print("-----------------------------------------------------------------------")
+print("Step 1 - Downloads and saves NLM Pubmed ahead of print documentes")
+print("-----------------------------------------------------------------------")
+
 ahead.process()
+
+print("\n-----------------------------------------------------------------------")
+print("Step 2 - Move unique documents to the standard Medline download directory")
+print("-----------------------------------------------------------------------")
+
+#ahead.syncWorkDir(workDir)

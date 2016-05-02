@@ -24,7 +24,12 @@
 
 from NLM_API import NLM_API
 from MongoDb import MyMongo
+from DocIterator import DocIterator
 from datetime import datetime
+import Tools
+import xmltodict
+
+__date__ = 20160418
 
 class NLM_AheadOfPrint:
     def __init__(self,
@@ -48,18 +53,189 @@ class NLM_AheadOfPrint:
         self.api = NLM_API()
         self.mid = MyMongo(dbName, idColName, mongoHost, mongoPort)
         self.mxml = MyMongo(dbName, xmlColName, mongoHost, mongoPort)
-        self.dir = xmlOutDir
-        self.encoding = encoding
 
+        self.dir = xmlOutDir.strip()
+        if not self.dir.endswith("/"): self.dir += "/"
+
+        self.encoding = encoding
         self.mid.createIndex("lastHarvesting", ["lastHarvesting"])
 
+
+    def __insertDocId(self,
+                      nowDate,
+                      docId):
+        """
+            Inserts an id document into collection "id"
+            nowDate - current date
+            docId - NLM document id
+            Returns True is it a new document False is it was already saved
+        """
+
+        doc = {"_id":docId, "status":"aheadofprint"}
+
+        # Check if the new document is already stored in Mongo
+        cursor = self.mid.search(doc)
+        isNew = cursor.count() == 0
+
+        if isNew:  #new document
+            doc["firstHarvesting"] = nowDate
+        else:
+            doc = cursor[0]
+        doc["lastHarvesting"] = nowDate
+
+        # Update id onto mongo
+        self.mid.replaceDoc(doc)
+
+        return isNew
+
+
+    def __insertDocs(self,
+                     nowDate,
+                     ids,
+                     xdir=".",
+                     encoding="UTF-8",
+                     verbose=False):
+        """
+        For each id from a list of ids, adds a new id document into mongo id
+        collection, add a new document into mongo xml collection and creates a
+        new file with xml content.
+        nowDate - current date
+        ids - a list of NLM document ids
+        xdir - output file directory
+        encoding - output file encoding
+        verbose - if True prints the document is inserted
+        """
+
+        newDocs = []
+        id_size = len(ids)
+
+        for id_ in ids:
+            # Insert id document into collection "id"
+            isNewDoc = self.__insertDocId(nowDate, id_)
+            if isNewDoc:
+                newDocs.append(id_)
+            if (verbose):
+                status = "[New]" if isNewDoc else "[Already processed]"
+                print("Document id:" + str(id_) + " " + status)
+
+        #input("Press Enter to continue...")
+
+
+        if len(newDocs) > 0:
+            if verbose:
+                print("Downloading and saving " + str(id_size) + " documents: ",
+                                                             end="", flush=True)
+
+            diter = DocIterator(newDocs, verbose=verbose)
+
+            for dId in diter:
+                docId = dId[0]
+                xml = dId[1]
+
+                # Save xml content into mongo and file
+                docDict = xmltodict.parse(xml)
+                doc = {"_id":docId, "date":nowDate, "doc":docDict}
+                self.mxml.saveDoc(doc)                      # save into mongo
+                Tools.xmlToFile(docId, xml, xdir, encoding)    # save into file
+
+            if verbose:
+                print()  # to print a new line
+
+
+    def __changeDocStatus(self,
+                          nowDate,
+                          verbose=False):
+        """
+        Changes the document status from "aheadofprint" to "no_aheadofprint" if
+        MongoDb lastHarvesting document field is older than 'nowDate'.
+        nowDate - current date
+        verbose - if True prints document id into standard output
+        """
+
+        # Searchs all documents whose lastHarvesting is lower than nowDate
+        query = {"lt":{"lastHarvesting":nowDate}}
+        cursor = self.mid.search(query)
+
+        for doc in cursor:
+            doc.lastHarvesting = nowDate
+            doc.status = "no_aheadofprint"
+
+            self.mid.replaceDoc(doc) # update id mongo doc
+
+            id_ = doc._id
+
+            # Deletes document from collection "xml"
+            self.mxml.deleteDoc(id_)
+
+            # Deletes the xml physical file
+            xdir = self.dir + id_ + ".xml"
+            try:
+                os.remove(filename)
+            except OSError:
+                pass
+
+            if verbose:
+                print("Doc[" + id_ + "] status changed. Xml deleted.")
+
+
+    def __getDocId(filePath,
+                   idXPath="PubmedArticle/MedlineCitation/PMID",
+                   encoding="UFT-8"):
+        """
+        filePath - the xml file path
+        encoding - xml file encoding
+        Returns the id tag of a xml document.
+        """
+        xml = readFile(filePath,encoding=encoding)
+        xpath = MyXML(xml)
+        list = xpath(idXPath)
+
+        if len(list) == 0:
+            id = None
+        else:
+            id = list[0][0]
+
+        return id
+
+
+    def __changeDocStatus2(self,
+                           workDir,
+                           verbose=False):
+        """
+        Changes the document status from "aheadofprint" to "no_aheadofprint" if
+        the xml document is also present in 'workDir'
+        workDir - directory in where the xml files will be searched
+        verbose - if True prints document id into standard output
+        """
+
+        # For all documents in workDir
+        for f in listdir(workDir):
+            id = __getDocId(join(workDir, f))
+
+            # Searches if there is a mongo document with same id and updates/deletes it.
+            query = {"_id": id}
+            cursor = self.mid.search(query)
+            for doc in cursor:
+                doc.lastHarvesting = nowDate
+                doc.status = "no_aheadofprint"
+
+                self.mid.replaceDoc(doc) # update id mongo doc
+                self.mxml.deleteDoc(id)   # delete xml mongo doc
+
+                xdir = self.dir + id_ + ".xml" # delete xml physical file
+                try:
+                    os.remove(filename)
+                except OSError:
+                    pass
+
+                if verbose:
+                    print("Doc[" + id_ + "] status changed. Xml deleted.")
+
+
     def process(self,
-                deletePublished=True,
                 verbose=True):
         """
-        Loads ahead of print xlm documents and saves then into mongo and files
-        deletePublished - True if 'no more ahead of print' document should be
-                          deleted from collection "xml"
+        Downloads 'ahead of print' xlm documents and saves then into mongo and files
         verbose - True if processing progress should be printed into standard
                   output
         """
@@ -69,17 +245,40 @@ class NLM_AheadOfPrint:
         retstart = 0
         loop = 1000 #10000
 
-
         # Insert new ahead of print documents
         while retstart < numOfDocs:
+            if verbose:
+                print("\n" + str(retstart+1) + "/" + str(numOfDocs))
+
             idTuple = self.api.getDocIds(retmax=loop, retstart=retstart)
-            self.api.insertDocs(nowDate, self.mid, self.mxml, idTuple[3],
-                                self.dir, self.encoding, verbose)
+            self.__insertDocs(nowDate, idTuple[3], self.dir, self.encoding,
+                                                                        verbose)
             retstart += loop
 
         # Remove no more ahead of print documents
-        self.api.changeDocStatus(nowDate, self.mid, self.mxml,
-                                 delXmlDoc=deletePublished, verbose=verbose)
+        self.__changeDocStatus(nowDate, self.mid, self.mxml, verbose=verbose)
 
         elapsedTime = datetime.now() - nowDate
-        print("\nElapsed time: " + str(elapsedTime))                         
+        print("\nElapsed time: " + str(elapsedTime))
+
+
+    def syncWorkDir(self,
+                    workDir,
+                    verbose=True):
+        """
+        Removes from processing directory all documents which are also in the
+        workDir. After that, moves all documents from processing directory into
+        workDir.
+        workDir - directory into which the NLM documents with no_aheadofprint
+                  status were downloaded.
+        """
+        nowDate = datetime.now()
+
+        # Removes duplicated documents from processing directory and workDir
+        self.__changeDocStatus2(workDir, verbose)
+
+        # Moves all xml files from processing directory to workDir directory
+        Tools.moveFiles(self.dir, workDir, fileFilter="*.xml", createToDir=False)
+
+        elapsedTime = datetime.now() - nowDate
+        print("\nElapsed time: " + str(elapsedTime))
