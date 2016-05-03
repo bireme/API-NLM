@@ -26,6 +26,7 @@ from NLM_API import NLM_API
 from MongoDb import MyMongo
 from DocIterator import DocIterator
 from datetime import datetime
+from os.path import exists
 import Tools
 import xmltodict
 
@@ -59,6 +60,7 @@ class NLM_AheadOfPrint:
 
         self.encoding = encoding
         self.mid.createIndex("lastHarvesting", ["lastHarvesting"])
+        self.mid.createIndex("status", ["_id", "status"])
 
 
     def __insertDocId(self,
@@ -71,16 +73,22 @@ class NLM_AheadOfPrint:
             Returns True is it a new document False is it was already saved
         """
 
-        doc = {"_id":docId, "status":"aheadofprint"}
+        doc = {"_id":docId}
 
-        # Check if the new document is already stored in Mongo
+        # Check if the new document is already stored in Mongo and physical file
         cursor = self.mid.search(doc)
-        isNew = cursor.count() == 0
-
-        if isNew:  #new document
+        isNew = (cursor.count() == 0)
+        if isNew:
             doc["firstHarvesting"] = nowDate
+            doc["status"] = "aheadofprint"
         else:
             doc = cursor[0]
+            if (doc["status"] == "aheadofprint"):
+                if (not exists(self.dir + docId + ".xml")): # last processing failed
+                    isNew = True # Re-process this document
+                else:
+                    doc["firstHarvesting"] = nowDate
+
         doc["lastHarvesting"] = nowDate
 
         # Update id onto mongo
@@ -118,14 +126,10 @@ class NLM_AheadOfPrint:
                 status = "[New]" if isNewDoc else "[Already processed]"
                 print("Document id:" + str(id_) + " " + status)
 
-        #input("Press Enter to continue...")
-
-
         if len(newDocs) > 0:
             if verbose:
                 print("Downloading and saving " + str(id_size) + " documents: ",
-                                                             end="", flush=True)
-
+                                                             end='', flush=True)
             diter = DocIterator(newDocs, verbose=verbose)
 
             for dId in diter:
@@ -213,7 +217,7 @@ class NLM_AheadOfPrint:
             id = __getDocId(join(workDir, f))
 
             # Searches if there is a mongo document with same id and updates/deletes it.
-            query = {"_id": id}
+            query = {"_id": id, "status":"aheadofprint"}
             cursor = self.mid.search(query)
             for doc in cursor:
                 doc.lastHarvesting = nowDate

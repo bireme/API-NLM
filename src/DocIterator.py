@@ -26,6 +26,8 @@ from LoadUrl import loadUrl
 from XML import MyXML
 import time
 
+__date__ = 20160418
+
 class DocIterator:
     def __init__(self,
                  ids,

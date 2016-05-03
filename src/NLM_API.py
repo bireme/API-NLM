@@ -26,6 +26,8 @@ from LoadUrl import loadUrl
 from XML import MyXML
 import Tools
 
+__date__ = 20160418
+
 class NLM_API:
     def __init__(self):
         self.eutils = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils"
