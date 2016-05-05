@@ -22,8 +22,8 @@
 #
 #=========================================================================
 
-from os import listdir,makedirs
-from os.path import isfile,isdir,exists,join
+from os import listdir, makedirs, remove
+from os.path import isdir, exists, join
 import fnmatch
 import shutil
 
@@ -55,7 +55,7 @@ def xmlToFile(docId,
     header = '<?xml version="1.0" encoding="UTF-8"?>'
     fname = str(docId) + ".xml"
 
-    f = open(join(toDir,fname), mode="w", encoding=encoding)
+    f = open(join(toDir, fname), mode="w", encoding=encoding)
     if includeXmlHeader:
         f.write(header + '\n')
     f.write(xml)
@@ -76,7 +76,9 @@ def moveFiles(fromDir,
                   not exists
     moveSubDirs - True if besides standard files, subdirectories also should be moved
     """
-    if not isdir(fromDir): raise Exception("fromDir does not exists")
+
+    if not isdir(fromDir):
+        raise Exception("fromDir does not exists")
 
     if not exists(toDir):
         if createToDir:
@@ -101,8 +103,28 @@ def readFile(filePath,
     encoding - character encoding of the file
     Returns a string with the file content
     """
+
     f = open(filePath, encoding=encoding)
-    str = f.read()
+    str_ = f.read()
     f.close()
 
-    return str
+    return str_
+
+
+def removeFile(filePath):
+    """
+    Deletes a file
+    filePath - the path (dir+name) of the file
+    """
+
+    remove(filePath)
+
+
+def existFile(filePath):
+    """
+    Checks if a file exists
+    filePath - the path (dir+name) of the file
+    Returns True if a file exists
+    """
+
+    return exists(filePath)

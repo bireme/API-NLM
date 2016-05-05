@@ -24,7 +24,6 @@
 
 from LoadUrl import loadUrl
 from XML import MyXML
-import Tools
 
 __date__ = 20160418
 
@@ -38,6 +37,7 @@ class NLM_API:
         Lists the databases that can be used by eutils api
         Returns a list of database names
         """
+
         databases = []
 
         xmlRes = loadUrl(self.eutils + "/einfo.fcgi")
@@ -57,14 +57,47 @@ class NLM_API:
         dbname - the database name
         Returns a list of field names
         """
+
         info = []
         xmlRes = loadUrl(self.eutils + "/einfo.fcgi?db=" + dbname + "&version=2.0")
 
         if xmlRes[0] == 200:
             xml = MyXML(xmlRes[1])
-            info = xml.getXPathChildText("eInfoResult/DbInfo/FieldList/Field", ['Name', 'FullName', 'Description'])
+            info = xml.getXPathChildText("eInfoResult/DbInfo/FieldList/Field",
+                                         ['Name', 'FullName', 'Description'])
 
         return info
+
+
+    def getAllIds(self,
+                  dbname="pubmed",
+                  query="pubstatusaheadofprint",
+                  verbose=True):
+        """
+        dbname - database name
+        query - expression used to retrieve the document ids
+        Returns a pair as follows:
+                         (<<#ofIds>, <list with all ids retrieved from a search>)
+        """
+
+        idTuple = self.getDocIds(dbname, query, retmax=0)
+        numOfDocs = int(idTuple[0])
+
+        idList = []
+        max_ = 1000
+        startPos = 0
+
+        while startPos < numOfDocs:
+            if verbose:
+                print(".", end='', flush=True)
+            idTuple = self.getDocIds(dbname, query, retmax=max_, retstart=startPos)
+            idList.extend(idTuple[3])
+            startPos += max_
+
+        if verbose:
+            print()
+
+        return numOfDocs, idList
 
 
     def getDocIds(self,
@@ -83,18 +116,23 @@ class NLM_API:
         useHistory - true if the retrieved ids should the stored in the server
                      for temporary and future use by efetch.
         Returns a tuple as follows:
-               (<#ofIds>, <webenv>, <querykey>, <list of the document ids that are retrieved by a query>)
+               (<#ofIds>, <webenv>, <querykey>, <list of the document ids that \
+               are retrieved by a query>)
         """
+
+        if retmax > 100000:
+            raise Exception("retamax > 100.000")
+
         url = self.eutils + "/esearch.fcgi?db=" + dbname + "&term=" + query \
                 + "&retstart=" + str(retstart)
 
-        if (useHistory):
-            url = url + "&usehistory=y"
+        if useHistory:
+            url += "&usehistory=y"
             retmax = 0
-        if (field != None):
-            url = url + "&field=" + field
+        if field != None:
+            url += "&field=" + field
 
-        url = url + "&retmax=" + str(retmax)
+        url += "&retmax=" + str(retmax)
 
         count = 0
         web = ""
@@ -106,13 +144,16 @@ class NLM_API:
             xml = MyXML(xmlRes[1])
             count = xml.getXPath("eSearchResult/Count")[0][0]
             #print("count=" + str(count))
-            if (useHistory):
+            if useHistory:
                 web = xml.getXPath("eSearchResult/WebEnv")[0][0]
                 key = xml.getXPath("eSearchResult/QueryKey")[0][0]
 
-            if (retmax > 0):
+            if retmax > 0:
                 id_list = xml.getXPath("eSearchResult/IdList/Id")
-                for id in id_list:
-                    ids.append(id[0])
+                for id_ in id_list:
+                    ids.append(id_[0])
+        else:
+            raise Exception(xmlRes[1] + " - ErrCode=" + str(xmlRes[0]) +
+                            " url=" + url)
 
-        return (count, web, key, ids)
+        return count, web, key, ids

@@ -24,14 +24,16 @@
 
 from NLM_AheadOfPrint import NLM_AheadOfPrint
 
+__date__ = 20160418
+
 ahead = NLM_AheadOfPrint("ts01vm.bireme.br",
                          "db_AheadOfPrint",
                          "col_Id",
-                         "col_Xml",
+                         "col_Doc",
                          "../xml")
 
 print("-----------------------------------------------------------------------")
-print("Step 1 - Downloads and saves NLM Pubmed ahead of print documentes")
+print("Step 1 - Downloads and saves NLM Pubmed ahead of print documents")
 print("-----------------------------------------------------------------------")
 
 ahead.process()

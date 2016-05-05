@@ -26,6 +26,8 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 import urllib.parse
 
+__date__ = 20160418
+
 responses = {
     100: ('Continue', 'Request received, please continue'),
     101: ('Switching Protocols',
@@ -105,7 +107,7 @@ def loadUrl(url,
         Returns the download content of a internet resource
     """
 
-    if post_values == None:
+    if post_values is None:
         data = None
     else:
         data = urllib.parse.urlencode(post_values)
@@ -119,7 +121,7 @@ def loadUrl(url,
     except HTTPError as e:
         resp = (e.code, responses[e.code][0])
     except URLError as e:
-        resp = (-1, e.reason)
+        resp = (-1, str(e.reason))
     else:
         resp = (200, content)
 

@@ -75,7 +75,7 @@ class MyXML:
             text = []
             for tag in child_tags:
                 txt = father.findtext(tag)
-                if txt == None:
+                if txt is None:
                     text.append("")
                 else:
                     text.append(txt)
@@ -92,4 +92,5 @@ class MyXML:
         Returns a string having the tags, attributes and texts of all elements of
         a xml subtree
         """
+
         return ET.tostring(element, encoding)

@@ -31,7 +31,7 @@ class MyMongo:
     def __init__(self,
                  database,
                  collection,
-                 host="localhost", 
+                 host="localhost",
                  port=27017):
         """
         database - the mongo database name
@@ -42,6 +42,9 @@ class MyMongo:
         self.client = MongoClient(host, port)
         self.db = self.client[database]
         self.col = self.db[collection]
+
+        self.ASCENDING = pymongo.ASCENDING
+        self.DESCENDING = pymongo.DESCENDING
 
     def saveDoc(self, doc):
         """
@@ -58,30 +61,21 @@ class MyMongo:
         _id = {'_id' : doc['_id']}
         self.col.replace_one(_id, doc, upsert=True)
 
-    def loadDoc(self, id):
+    def loadDoc(self, id_):
         """
-        id - mongo document _id field
+        id_ - mongo document _id field
         Returns a saved document
         """
-        return self.col.find_one(id)
+        return self.col.find_one(id_)
 
-    def loadDocs(self, query = {}):
-        """
-        query - mongo document pattern represented as a dictionary to be used
-                as a filter
-        Returns an ordered pair of type (<size of the list>,<list of documents>)
-        """
-        cursor = self.col.find(query)
-        return (cursor.count(), cursor)
-
-    def deleteDoc(self, id):
+    def deleteDoc(self, id_):
         """
         Deletes a document from the collection
-        id - mongo document _id field
+        id_ - mongo document _id field
         Returns True if the deletion was ok or False if not
         """
-        idd = {'_id' : id}
-        return (self.col.delete_one(idd).deleted_count == 1)
+        idd = {'_id' : id_}
+        return self.col.delete_one(idd).deleted_count == 1
 
     def numOfDocs(self):
         """
@@ -131,7 +125,7 @@ class MyMongo:
         self.db.drop_collection(self.col)
 
     def search(self,
-               query=None,
+               query={},
                retFldNames=None):
         """
         Searches documents

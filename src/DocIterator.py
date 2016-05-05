@@ -22,9 +22,9 @@
 #
 #=========================================================================
 
+import time
 from LoadUrl import loadUrl
 from XML import MyXML
-import time
 
 __date__ = 20160418
 
@@ -53,7 +53,7 @@ class DocIterator:
         if self.total == 0:
             raise Exception("Empty id list")
 
-        self.blockSize =  size if self.total > size else self.total
+        self.blockSize = size if self.total > size else self.total
         self.lastBlock = (self.total / self.blockSize) - 1
         self.curBlock = 0
         self.curBlkPos = 0
@@ -77,7 +77,7 @@ class DocIterator:
         """
         Returns the next pair (<id>,<downloaded xml document>)
         """
-        #print("entra no next")
+
         xml = None
         if self.curBlkPos <= len(self.xmlBlock) - 1:
             xml = self.xmlBlock[self.curBlkPos]
@@ -87,9 +87,7 @@ class DocIterator:
                 self.__loadBlock(self.curBlock + 1)
                 xml = self.__next__()
             else:
-                #print("StopIteration")
                 raise StopIteration()
-        #print("sai do next")
         return xml
 
 
@@ -127,12 +125,12 @@ class DocIterator:
                     self.__loadBlock(blkNumber, curExec + 1)
                 else:
                     raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" /
-                                 + xmlRes[1] + " url:" + self.url)
+                                    + xmlRes[1] + " url:" + self.url)
         else:
             raise StopIteration()
 
         self.xmlBlock = block
-        #print("tamanho do bloco: " + str(len(self.xmlBlock)))
+
 
     def __splitBlock(self,
                      ids,
@@ -145,6 +143,7 @@ class DocIterator:
         xml - the downloaded xml to be splited
         Returns a list of pairs (<id>, <xml document>)
         """
+
         ret = []
         idx = 0
         mxml = MyXML(xml)
@@ -152,8 +151,7 @@ class DocIterator:
         for elem in elems:
             ret.append((ids[idx], mxml.getTreeString(elem).strip()))
             idx += 1
-        #s = str(len(ret))
-        #print("size=" + s)
+
         return ret
 
 
@@ -169,13 +167,13 @@ class DocIterator:
         last = min(retStart + self.blockSize, self.total)
         first = True
 
-        for idx in range(retStart,last):
+        for idx in range(retStart, last):
             if first:
                 first = False
             else:
                 strg += ","
-            id = self.ids[idx]
-            ids_.append(id)
-            strg += str(id)
+            id_ = self.ids[idx]
+            ids_.append(id_)
+            strg += str(id_)
 
-        return (ids_,strg)
+        return (ids_, strg)
