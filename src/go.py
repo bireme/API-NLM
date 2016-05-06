@@ -22,24 +22,54 @@
 #
 #=========================================================================
 
+from datetime import datetime
 from NLM_AheadOfPrint import NLM_AheadOfPrint
+from NLM_AOPFactory import NLM_AOPFactory
 
 __date__ = 20160418
 
-ahead = NLM_AheadOfPrint("ts01vm.bireme.br",
-                         "db_AheadOfPrint",
-                         "col_Id",
-                         "col_Doc",
-                         "../xml")
+def go(factory,
+       verbose):
+    """
+       factory - a NLM_AOPFactory object
+       verbose - if True debug messages are printed at scream
+    """
 
-print("-----------------------------------------------------------------------")
-print("Step 1 - Downloads and saves NLM Pubmed ahead of print documents")
-print("-----------------------------------------------------------------------")
+    ahead = NLM_AheadOfPrint(factory)
 
-ahead.process()
+    print("-----------------------------------------------------------------------")
+    print("Step 1 - Downloads and saves NLM Pubmed ahead of print documents")
+    print("-----------------------------------------------------------------------")
 
-print("\n-----------------------------------------------------------------------")
-print("Step 2 - Move unique documents to the standard Medline download directory")
-print("-----------------------------------------------------------------------")
+    ahead.process(verbose)
 
-#ahead.syncWorkDir(workDir)
+    print("\n-----------------------------------------------------------------------")
+    print("Step 2 - Move unique documents to the standard Medline download directory")
+    print("-----------------------------------------------------------------------")
+
+    ahead.syncWorkDir(verbose)
+
+
+
+
+if __name__ == "__main__":
+    # execute only if run as a script
+
+    verbose_ = True
+
+    now = datetime.now()
+    date = datetime.strftime(now, "%Y-%m-%d")
+    hour = datetime.strftime(now, "%H:%M:%S")
+
+    factory_ = NLM_AOPFactory()
+
+    factory_.setMongoHost("ts01vm.bireme.br")
+    factory_.setMongoDbName("db_AheadOfPrint")
+    factory_.setMongoIdColName("col_Id")
+    factory_.setMongoDocColName("col_Doc")
+    factory_.setXmlOutDir("../xml")
+    factory_.setXmlProcDir("")
+    factory_.setDate(date)
+    factory_.setHour(hour)
+
+    go(factory_, verbose_)
