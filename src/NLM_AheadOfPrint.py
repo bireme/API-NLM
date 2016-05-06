@@ -206,6 +206,7 @@ class NLM_AheadOfPrint:
                    encoding="UFT-8"):
         """
         filePath - the xml file path
+        idXPath - the xml path to the document id
         encoding - xml file encoding
         Returns the id tag of a xml document.
         """
@@ -220,6 +221,28 @@ class NLM_AheadOfPrint:
 
         return id_
 
+    def __getDocStatus(self,
+                       filePath,
+                       idXPath="PubmedArticle/PubmedData/PublicationStatus",
+                       encoding="UFT-8"):
+        """
+        filePath - the xml file path
+        idXPath - the xml path to the document status
+        encoding - xml file encoding
+        Returns the id tag of a xml document.
+        """
+
+        xml = Tools.readFile(filePath, encoding=encoding)
+        xpath = MyXML(xml)
+        xlist = xpath.getXPath(idXPath)
+
+        if len(xlist) == 0:
+            status = None
+        else:
+            status = xlist[0][0]
+
+        return status
+
 
     def __changeDocStatus2(self,
                            workDir,
@@ -232,28 +255,32 @@ class NLM_AheadOfPrint:
         """
 
         # For all documents in workDir
-        for f in os.listdir(workDir):
-            id_ = self.__getDocId(join(workDir, f))
+        listDir = os.listdir(workDir)
+
+        for f in listDir:
+            status = self.__getDocStatus(join(workDir, f))
 
             # Searches if there is a mongo document with same id and updates/deletes it.
-            query = {"_id": id}
-            cursor = self.mdoc.search(query)
+            if status == "aheadofprint":
+                id_ = self.__getDocId(join(workDir, f))
+                query = {"_id": id}
+                cursor = self.mdoc.search(query)
 
-            if len(cursor > 0):
-                doc = self.__getNewDoc(id, "no_aheadofprint")
+                if len(cursor > 0):
+                    doc = self.__getNewDoc(id, "no_aheadofprint")
 
-                self.mid.saveDoc(doc)    # create new id mongo doc
+                    self.mid.saveDoc(doc)    # create new id mongo doc
 
-                filename = join(self.xmlOutDir, id_ + ".xml") # delete xml physical file
-                try:
-                    os.remove(filename)
-                except OSError:
-                    pass
+                    filename = join(self.xmlOutDir, id_ + ".xml") # delete xml physical file
+                    try:
+                        os.remove(filename)
+                    except OSError:
+                        pass
 
-                self.mdoc.deleteDoc(id)  # delete xml mongo doc
+                    self.mdoc.deleteDoc(id)  # delete xml mongo doc
 
-                if verbose:
-                    print("Doc[" + id + "] status changed. Xml deleted.")
+        if verbose:
+            print("Total: " + str(len(listDir)) + " xml files were deleted.")
 
 
     def process(self,
@@ -310,9 +337,13 @@ class NLM_AheadOfPrint:
         nowDate = datetime.now()
 
         # Removes duplicated documents from processing directory and workDir
+        if verbose:
+            print("\nRemoving duplicated xml files.")
         self.__changeDocStatus2(self.xmlProcDir, verbose)
 
-        # Moves all xml files from processing directory to workDir directory
+        # Moves all xml files to the oficial processing directory
+        if verbose:
+            print("\nMoving xml files to the processing directory.")
         Tools.moveFiles(self.xmlOutDir, self.xmlProcDir, fileFilter="*.xml",
                         createToDir=False)
 
