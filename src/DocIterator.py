@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-#=========================================================================
+# =========================================================================
 #
 #    Copyright © 2016 BIREME/PAHO/WHO
 #
@@ -20,7 +20,7 @@
 #    You should have received a copy of the GNU Lesser General Public
 #    License along with API-NLM. If not, see <http://www.gnu.org/licenses/>.
 #
-#=========================================================================
+# =========================================================================
 
 import time
 from LoadUrl import loadUrl
@@ -28,7 +28,9 @@ from XML import MyXML
 
 __date__ = 20160418
 
+
 class DocIterator:
+
     def __init__(self,
                  ids,
                  dbName="pubmed",
@@ -37,16 +39,18 @@ class DocIterator:
                  xpathSplit="PubmedArticleSet/PubmedArticle",
                  verbose=True):
         """
-            ids - list of xml document ids to be downloaded
-            dbName - database  name
-            retType - see efetch 'rettype' documentation
-            retMode - see efetch 'retmode' documentation
-            xpathSplit - the xpath expression used to extract the desired xml
-                         documents from the big one downloaded with efetch
-            verbose - if True print a dot in the standard output when a block is loaded
+
+        ids - list of xml document ids to be downloaded
+        dbName - database  name
+        retType - see efetch 'rettype' documentation
+        retMode - see efetch 'retmode' documentation
+        xpathSplit - the xpath expression used to extract the desired xml
+                     documents from the big one downloaded with efetch
+        verbose - if True print a dot in the standard output when a block
+                  is loaded
         """
         base = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
-        size = 50 #100
+        size = 50  # 100
 
         self.ids = ids
         self.total = len(ids)
@@ -60,24 +64,17 @@ class DocIterator:
         self.xmlBlock = []
         self.xpath = xpathSplit
         self.url = base
-        self.postParam = {"db":dbName, "retmax":str(self.blockSize),
-                          "rettype":retType, "retmode":retMode}
+        self.postParam = {"db": dbName, "retmax": str(self.blockSize),
+                          "rettype": retType, "retmode": retMode}
         self.verbose = verbose
         self.__loadBlock(0)
 
-
     def __iter__(self):
-        """
-        Turns this class iterable
-        """
+        """Turn this class iterable"""
         return self
 
-
     def __next__(self):
-        """
-        Returns the next pair (<id>,<downloaded xml document>)
-        """
-
+        """Return the next pair (<id>,<downloaded xml document>)"""
         xml = None
         if self.curBlkPos <= len(self.xmlBlock) - 1:
             xml = self.xmlBlock[self.curBlkPos]
@@ -90,17 +87,16 @@ class DocIterator:
                 raise StopIteration()
         return xml
 
-
     def __loadBlock(self,
                     blkNumber,
                     curExec=1):
         """
-        Loads the document buffer with the next documents.
+        Load the document buffer with the next documents.
+
         blkNumber - the block number to be downloaded (initial block is 0)
         curExec - number of times that this function is trying to execute
                   because a download exception.
         """
-
         if self.verbose:
             if curExec == 1:
                 print('.', end="", flush=True)
@@ -115,35 +111,33 @@ class DocIterator:
             xmlRes = loadUrl(self.url, post_values=self.postParam)
             del self.postParam["id"]
             if xmlRes[0] == 200:
-                #print("res=" + str(xmlRes[1]))
+                # print("res=" + str(xmlRes[1]))
                 block = self.__splitBlock(pair[0], xmlRes[1])
                 self.curBlock = blkNumber
                 self.curBlkPos = 0
             else:
-                if curExec < 4: # waits 60 seconds and try again
+                if curExec < 4:  # waits 60 seconds and try again
                     time.sleep(60)
                     self.__loadBlock(blkNumber, curExec + 1)
                 else:
-                    raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" /
-                                    + xmlRes[1] + " url:" + self.url)
+                    raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +
+                                    xmlRes[1] + " url:" + self.url)
         else:
             raise StopIteration()
 
         self.xmlBlock = block
 
-
     def __splitBlock(self,
                      ids,
                      xml):
         """
-        Extracts from the downloaded content the desired documents using the
-        xpathSplit xpath expression
+        Extract from the downloaded content the desired documents using the
+        xpathSplit xpath expression.
 
         ids = list of document ids
         xml - the downloaded xml to be splited
         Returns a list of pairs (<id>, <xml document>)
         """
-
         ret = []
         idx = 0
         mxml = MyXML(xml)
@@ -154,11 +148,10 @@ class DocIterator:
 
         return ret
 
-
     def __getIds(self,
                  retStart):
         """
-        Retrieves the next ids to be used to download the xml documents
+        Retrieve the next ids to be used to download the xml documents
         retStart - the initial id position
         Returns a pair (<list of ids>, <string with next ids>)
         """

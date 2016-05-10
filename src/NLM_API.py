@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-#=========================================================================
+# =========================================================================
 #
 #    Copyright © 2016 BIREME/PAHO/WHO
 #
@@ -20,24 +20,25 @@
 #    You should have received a copy of the GNU Lesser General Public
 #    License along with API-NLM. If not, see <http://www.gnu.org/licenses/>.
 #
-#=========================================================================
+# =========================================================================
 
+import time
 from LoadUrl import loadUrl
 from XML import MyXML
 
 __date__ = 20160418
 
+
 class NLM_API:
     def __init__(self):
         self.eutils = "http://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
-
     def listDatabases(self):
         """
-        Lists the databases that can be used by eutils api
+        List the databases that can be used by eutils api.
+
         Returns a list of database names
         """
-
         databases = []
 
         xmlRes = loadUrl(self.eutils + "/einfo.fcgi")
@@ -50,16 +51,16 @@ class NLM_API:
 
         return databases
 
-
     def listDatabaseFields(self, dbname):
         """
-        Lists the fields of a database
+        List the fields of a database.
+
         dbname - the database name
         Returns a list of field names
         """
-
         info = []
-        xmlRes = loadUrl(self.eutils + "/einfo.fcgi?db=" + dbname + "&version=2.0")
+        xmlRes = loadUrl(self.eutils + "/einfo.fcgi?db=" + dbname +
+                         "&version=2.0")
 
         if xmlRes[0] == 200:
             xml = MyXML(xmlRes[1])
@@ -68,18 +69,17 @@ class NLM_API:
 
         return info
 
-
     def getAllIds(self,
                   dbname="pubmed",
                   query="pubstatusaheadofprint",
                   verbose=True):
         """
+
         dbname - database name
         query - expression used to retrieve the document ids
         Returns a pair as follows:
-                         (<<#ofIds>, <list with all ids retrieved from a search>)
+            (<<#ofIds>, <list with all ids retrieved from a search>)
         """
-
         idTuple = self.getDocIds(dbname, query, retmax=0)
         numOfDocs = int(idTuple[0])
 
@@ -90,7 +90,8 @@ class NLM_API:
         while startPos < numOfDocs:
             if verbose:
                 print(".", end='', flush=True)
-            idTuple = self.getDocIds(dbname, query, retmax=max_, retstart=startPos)
+            idTuple = self.getDocIds(dbname, query, retmax=max_,
+                                     retstart=startPos)
             idList.extend(idTuple[3])
             startPos += max_
 
@@ -99,15 +100,16 @@ class NLM_API:
 
         return numOfDocs, idList
 
-
     def getDocIds(self,
                   dbname="pubmed",
                   query="pubstatusaheadofprint",
                   retmax=1000,
                   retstart=0,
                   field=None,
-                  useHistory=False):
+                  useHistory=False,
+                  curExec=1):
         """
+
         dbname - database name
         query - expression used to retrieve the document ids
         retmax - the maximum number of returned ids
@@ -115,21 +117,22 @@ class NLM_API:
         field - if used narrow the search to that field
         useHistory - true if the retrieved ids should the stored in the server
                      for temporary and future use by efetch.
+        curExec - number of times that this function is trying to execute
+                  because a download exception.
         Returns a tuple as follows:
-               (<#ofIds>, <webenv>, <querykey>, <list of the document ids that \
+               (<#ofIds>, <webenv>, <querykey>, <list of the document ids that
                are retrieved by a query>)
         """
-
         if retmax > 100000:
             raise Exception("retamax > 100.000")
 
-        url = self.eutils + "/esearch.fcgi?db=" + dbname + "&term=" + query \
-                + "&retstart=" + str(retstart)
+        url = self.eutils + "/esearch.fcgi?db=" + dbname + "&term=" + \
+              query + "&retstart=" + str(retstart)
 
         if useHistory:
             url += "&usehistory=y"
             retmax = 0
-        if field != None:
+        if field is not None:
             url += "&field=" + field
 
         url += "&retmax=" + str(retmax)
@@ -143,7 +146,7 @@ class NLM_API:
         if xmlRes[0] == 200:
             xml = MyXML(xmlRes[1])
             count = xml.getXPath("eSearchResult/Count")[0][0]
-            #print("count=" + str(count))
+            # print("count=" + str(count))
             if useHistory:
                 web = xml.getXPath("eSearchResult/WebEnv")[0][0]
                 key = xml.getXPath("eSearchResult/QueryKey")[0][0]
@@ -153,7 +156,12 @@ class NLM_API:
                 for id_ in id_list:
                     ids.append(id_[0])
         else:
-            raise Exception(xmlRes[1] + " - ErrCode=" + str(xmlRes[0]) +
-                            " url=" + url)
+            if curExec < 4:  # waits 60 seconds and try again
+                time.sleep(60)
+                self.getDocIds(dbname, query, retmax, retstart, field,
+                               useHistory, curExec + 1)
+            else:
+                raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +
+                                xmlRes[1] + " url:" + self.url)
 
         return count, web, key, ids

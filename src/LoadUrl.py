@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-#=========================================================================
+# =========================================================================
 #
 #    Copyright © 2016 BIREME/PAHO/WHO
 #
@@ -20,7 +20,7 @@
 #    You should have received a copy of the GNU Lesser General Public
 #    License along with API-NLM. If not, see <http://www.gnu.org/licenses/>.
 #
-#=========================================================================
+# =========================================================================
 
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
@@ -94,19 +94,20 @@ responses = {
     505: ('HTTP Version Not Supported', 'Cannot fulfill request.'),
 }
 
+
 def loadUrl(url,
-            header = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)' },
-            post_values = None, # if None => GET else POST
-            post_values_encod = 'ascii'):
-    """
-        url - the internet address of the content to be downloaded
-        header - dictionary of the http send header
-        post_values - dictionary of the POST parameters. If None is used the
-                      send protocol used would be GET
-        post_values_encod - the encoding used in post_values dictionary
-        Returns the download content of a internet resource
+            header={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'},
+            post_values=None,  # if None => GET else POST
+            post_values_encod='ascii'):
     """
 
+    url - the internet address of the content to be downloaded
+    header - dictionary of the http send header
+    post_values - dictionary of the POST parameters. If None is used the
+                  send protocol used would be GET
+    post_values_encod - the encoding used in post_values dictionary
+    Returns the download content of a internet resource
+    """
     if post_values is None:
         data = None
     else:

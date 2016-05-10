@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-#=========================================================================
+# =========================================================================
 #
 #    Copyright © 2016 BIREME/PAHO/WHO
 #
@@ -20,16 +20,18 @@
 #    You should have received a copy of the GNU Lesser General Public
 #    License along with API-NLM. If not, see <http://www.gnu.org/licenses/>.
 #
-#=========================================================================
+# =========================================================================
 
 import xml.etree.ElementTree as ET
 
 __date__ = 20160418
 
+
 class MyXML:
     def __init__(self,
                  xmlStr):
         """
+
         xmlStr - the xml string
         """
         self.xmlStr = xmlStr
@@ -39,9 +41,10 @@ class MyXML:
     def getXPath(self,
                  xpath):
         """
+
         xpath - the xpath expression
-        Returns a list of pairs with first element having the text of retrieved
-        xml element and the second it attribute
+        Returns a list of pairs with first element having the text of
+        retrieved xml element and the second it attribute
         """
         ret = []
         xp = self.root.findall(xpath)
@@ -53,18 +56,20 @@ class MyXML:
     def getXPathElements(self,
                          xpath):
         """
+
         xpath - the xpath expression
         Returns a list of xml elements
         """
-        #print("Element=" + str(self.root) + " xpath=" + xpath)
+        # print("Element=" + str(self.root) + " xpath=" + xpath)
         xp = self.root.findall(xpath)
-        #print("xp len=" + str(len(xp)))
+        # print("xp len=" + str(len(xp)))
         return xp
 
     def getXPathChildText(self,
                           father_xpath,
                           child_tags):
         """
+
         father_xpath - the xpath of the father xml element
         child_tags - the tags of the desired xml child elements
         Returns the text of desired children of a given xml element
@@ -87,10 +92,10 @@ class MyXML:
                       element,
                       encoding="unicode"):
         """
+
         element - the root subtree element
         encoding - the encoding of the output string
-        Returns a string having the tags, attributes and texts of all elements of
-        a xml subtree
+        Returns a string having the tags, attributes and texts of all
+        elements of a xml subtree
         """
-
         return ET.tostring(element, encoding)

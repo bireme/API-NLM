@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-#=========================================================================
+# =========================================================================
 #
 #    Copyright © 2016 BIREME/PAHO/WHO
 #
@@ -20,51 +20,40 @@
 #    You should have received a copy of the GNU Lesser General Public
 #    License along with API-NLM. If not, see <http://www.gnu.org/licenses/>.
 #
-#=========================================================================
+# =========================================================================
+
 
 class NLM_AOPFactory:
     def __init__(self):
-        self.mongoHost = None
-        self.dbName = None
-        self.idColName = None
-        self.docColName = None
+        self.myMongoId = None
+        self.myMongoDoc = None
         self.xmlOutDir = None
         self.xmlProcDir = None
         self.date = None
         self.hour = None
+        self.process = None
+        self.owner = None
         self.encoding = "UTF-8"
-        self.mongoPort = 27017
 
-    def setMongoHost(self, mongoHost):
+    def setMyMongoId(self, myMongoId):
         """
-        mongoHost - mongodb server host
+
+        myMongoId - MyMongo object representing 'id' collection
         """
-        self.mongoHost = mongoHost
+        self.myMongoId = myMongoId
         return self
 
-    def setMongoDbName(self, dbName):
+    def setMyMongoDoc(self, myMongoDoc):
         """
-        dbName - mongodb database name
-        """
-        self.dbName = dbName
-        return self
 
-    def setMongoIdColName(self, idColName):
+        myMongoDoc - MyMongo object representing 'doc' collection
         """
-        idColName - name of mongodb collection of ids
-        """
-        self.idColName = idColName
-        return self
-
-    def setMongoDocColName(self, docColName):
-        """
-        docColName - name of mongodb collection of documents
-        """
-        self.docColName = docColName
+        self.myMongoDoc = myMongoDoc
         return self
 
     def setXmlOutDir(self, xmlOutDir):
         """
+
         xmlOutDir - directory path where xml files will be created
         """
         self.xmlOutDir = xmlOutDir
@@ -72,6 +61,7 @@ class NLM_AOPFactory:
 
     def setXmlProcDir(self, xmlProcDir):
         """
+
         xmlProcDir - directory path of xml files of standard medline processing
         """
         self.xmlProcDir = xmlProcDir
@@ -79,6 +69,7 @@ class NLM_AOPFactory:
 
     def setDate(self, date):
         """
+
         date - current date string with format: YY-MM-DD
         """
         self.date = date
@@ -86,42 +77,54 @@ class NLM_AOPFactory:
 
     def setHour(self, hour):
         """
+
         date - current time string with format: HH:MM:SS
         """
         self.hour = hour
         return self
 
+    def setProcess(self, process):
+        """
+
+        process - harvesting process name
+        """
+        self.process = process
+        return self
+
+    def setOwner(self, owner):
+        """
+
+        owner - harvesting process owner
+        """
+        self.owner = owner
+        return self
+
     def setEncoding(self, encoding):
         """
+
         encoding - xml files encoding
         """
         self.encoding = encoding
         return self
 
-    def setMongoPort(self, mongoPort):
-        """
-        mongoPort - mongodb server port
-        """
-        self.mongoPort = mongoPort
-        return self
-
     def check(self):
         """
-        Checks if there is a missing parameter
+        Check if there is a missing parameter.
+
         """
-        if self.mongoHost is None:
-            raise Exception("mongoHost is None")
-        if self.dbName is None:
-            raise Exception("dbName is None")
-        if self.idColName is None:
-            raise Exception("idColName is None")
-        if self.docColName is None:
-            raise Exception("docColName is None")
+        if self.myMongoId is None:
+            raise Exception("myMongoId is None")
+        if self.myMongoDoc is None:
+            raise Exception("myMongoDoc is None")
         if self.xmlOutDir is None:
             raise Exception("xmlOutDir is None")
         if self.xmlProcDir is None:
             raise Exception("xmlProcDir is None")
         if self.date is None:
             raise Exception("date is None")
+        if self.process is None:
+            raise Exception("process is None")
+        if self.owner is None:
+            raise Exception("owner is None")
         if self.hour is None:
             raise Exception("hour is None")

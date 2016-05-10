@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-#=========================================================================
+# =========================================================================
 #
 #    Copyright © 2016 BIREME/PAHO/WHO
 #
@@ -20,12 +20,13 @@
 #    You should have received a copy of the GNU Lesser General Public
 #    License along with API-NLM. If not, see <http://www.gnu.org/licenses/>.
 #
-#=========================================================================
+# =========================================================================
 
 import pymongo
 from pymongo import MongoClient
 
 __date__ = 20160418
+
 
 class MyMongo:
     def __init__(self,
@@ -34,6 +35,7 @@ class MyMongo:
                  host="localhost",
                  port=27017):
         """
+
         database - the mongo database name
         collection - the collection name
         host - url of the mongo server host
@@ -48,7 +50,8 @@ class MyMongo:
 
     def saveDoc(self, doc):
         """
-        Saves a new document into the selected collection
+        Save a new document into the selected collection.
+
         doc - mongo document represented as a dictionary
         """
         self.col.insert_one(doc)
@@ -58,11 +61,12 @@ class MyMongo:
         Replaces an exiting saved document by a new one with the same _id field
         doc - mongo document represented as a dictionary
         """
-        _id = {'_id' : doc['_id']}
+        _id = {'_id': doc['_id']}
         self.col.replace_one(_id, doc, upsert=True)
 
     def loadDoc(self, id_):
         """
+
         id_ - mongo document _id field
         Returns a saved document
         """
@@ -70,26 +74,28 @@ class MyMongo:
 
     def deleteDoc(self, id_):
         """
-        Deletes a document from the collection
+        Delete a document from the collection.
+
         id_ - mongo document _id field
         Returns True if the deletion was ok or False if not
         """
-        idd = {'_id' : id_}
+        idd = {'_id': id_}
         return self.col.delete_one(idd).deleted_count == 1
 
     def numOfDocs(self):
         """
+
         Returns the number of documents of this collection
         """
         return self.col.count()
 
     def createIndex(self, name, fieldNames):
         """
-        Creates an index for this collection
+        Create an index for this collection.
+
         name - the index name
         fieldNames - list of mongo document fields to be indexed
         """
-
         flds = []
         for fname in fieldNames:
             flds.append((fname, pymongo.ASCENDING))
@@ -97,15 +103,14 @@ class MyMongo:
 
     def dropIndex(self, name):
         """
-        Deletes an index
+        Delete an index.
+
         name - the index name
         """
         self.col.drop_index(name)
 
     def reindexAll(self):
-        """
-        Reindex all indexes
-        """
+        """Reindex all indexes."""
         self.col.reindex()
 
     def listIndexes(self):
@@ -119,7 +124,7 @@ class MyMongo:
 
     def dropCollection(self):
         """
-        Deletes the collection from the database
+        Delete the collection from the database.
         """
 
         self.db.drop_collection(self.col)
@@ -128,7 +133,8 @@ class MyMongo:
                query={},
                retFldNames=None):
         """
-        Searches documents
+        Search documents.
+
         query - map with field/value elements
         retFldName - list of field names returned into retrieved documents
         Returns an iterable of documents
