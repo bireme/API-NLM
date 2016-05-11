@@ -107,7 +107,7 @@ class NLM_API:
                   retstart=0,
                   field=None,
                   useHistory=False,
-                  curExec=1):
+                  waitSeconds=30):
         """
 
         dbname - database name
@@ -117,8 +117,8 @@ class NLM_API:
         field - if used narrow the search to that field
         useHistory - true if the retrieved ids should the stored in the server
                      for temporary and future use by efetch.
-        curExec - number of times that this function is trying to execute
-                  because a download exception.
+        waitSeconds - number of seconds the program will sleep it download
+                      fails
         Returns a tuple as follows:
                (<#ofIds>, <webenv>, <querykey>, <list of the document ids that
                are retrieved by a query>)
@@ -156,10 +156,10 @@ class NLM_API:
                 for id_ in id_list:
                     ids.append(id_[0])
         else:
-            if curExec < 4:  # waits 60 seconds and try again
-                time.sleep(60)
+            if waitSeconds <= 3600:  # waits up to 1 hour and try again
+                time.sleep(waitSeconds)
                 self.getDocIds(dbname, query, retmax, retstart, field,
-                               useHistory, curExec + 1)
+                               useHistory, waitSeconds * 2)
             else:
                 raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +
                                 xmlRes[1] + " url:" + self.url)

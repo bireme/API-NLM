@@ -89,13 +89,13 @@ class DocIterator:
 
     def __loadBlock(self,
                     blkNumber,
-                    curExec=1):
+                    waitSeconds=30):
         """
         Load the document buffer with the next documents.
 
         blkNumber - the block number to be downloaded (initial block is 0)
-        curExec - number of times that this function is trying to execute
-                  because a download exception.
+        waitSeconds - number of seconds the program will sleep it download
+                      fails
         """
         if self.verbose:
             if curExec == 1:
@@ -116,9 +116,9 @@ class DocIterator:
                 self.curBlock = blkNumber
                 self.curBlkPos = 0
             else:
-                if curExec < 4:  # waits 60 seconds and try again
-                    time.sleep(60)
-                    self.__loadBlock(blkNumber, curExec + 1)
+                if waitSeconds <= 3600:  # waits up to 1 hour and try again
+                    time.sleep(waitSeconds)
+                    self.__loadBlock(blkNumber, waitSeconds * 2)
                 else:
                     raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +
                                     xmlRes[1] + " url:" + self.url)
