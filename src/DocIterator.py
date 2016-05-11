@@ -98,7 +98,7 @@ class DocIterator:
                       fails
         """
         if self.verbose:
-            if curExec == 1:
+            if waitSeconds == 30:
                 print('.', end="", flush=True)
             else:
                 print('+', end="", flush=True)
