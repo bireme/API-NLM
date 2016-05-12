@@ -180,7 +180,7 @@ class NLM_AheadOfPrint:
     def __getDocId(self,
                    filePath,
                    idXPath="PubmedArticle/MedlineCitation/PMID",
-                   encoding="UFT-8"):
+                   encoding="UTF-8"):
         """
 
         filePath - the xml file path
@@ -201,8 +201,8 @@ class NLM_AheadOfPrint:
 
     def __getDocStatus(self,
                        filePath,
-                       idXPath="PubmedArticle/PubmedData/PublicationStatus",
-                       encoding="UFT-8"):
+                       idXPath="MedlineCitationSet/MedlineCitation/PMID",
+                       encoding="UTF-8"):
         """
         filePath - the xml file path
         idXPath - the xml path to the document status

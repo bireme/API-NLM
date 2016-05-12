@@ -122,7 +122,7 @@ if __name__ == "__main__":
     factory_.setMyMongoId(mid)
     factory_.setMyMongoDoc(mdoc)
     factory_.setXmlOutDir("../xml")
-    factory_.setXmlProcDir("")
+    factory_.setXmlProcDir("../wrk")
     factory_.setDate(date)
     factory_.setHour(time)
     factory_.setProcess(process)
