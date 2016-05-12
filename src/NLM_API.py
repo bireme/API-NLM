@@ -80,7 +80,7 @@ class NLM_API:
         Returns a pair as follows:
             (<<#ofIds>, <list with all ids retrieved from a search>)
         """
-        idTuple = self.getDocIds(dbname, query, retmax=0, verbose)
+        idTuple = self.getDocIds(dbname, query, retmax=0, verbose=verbose)
         numOfDocs = int(idTuple[0])
 
         idList = []
@@ -91,7 +91,7 @@ class NLM_API:
             if verbose:
                 print(".", end='', flush=True)
             idTuple = self.getDocIds(dbname, query, retmax=max_,
-                                     retstart=startPos, verbose)
+                                     retstart=startPos, verbose=verbose)
             idList.extend(idTuple[3])
             startPos += max_
 
