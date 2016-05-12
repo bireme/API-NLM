@@ -221,7 +221,7 @@ class NLM_AheadOfPrint:
                 query = {"_id": id}
                 cursor = self.mdoc.search(query)
 
-                if len(cursor > 0):
+                if cursor.count() > 0:
                     doc = self.logDocument.getNewDoc(id, "no_aheadofprint")
 
                     self.mid.saveDoc(doc)    # create new id mongo doc
