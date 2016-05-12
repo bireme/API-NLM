@@ -23,12 +23,12 @@
 # =========================================================================
 
 from datetime import datetime
+import fnmatch
 import os
 from os.path import join
 import xmltodict
 from LogDocument import LogDocument
 from NLM_API import NLM_API
-from MongoDb import MyMongo
 from XML import MyXML
 from DocIterator import DocIterator
 import Tools
@@ -147,7 +147,7 @@ class NLM_AheadOfPrint:
                           verbose=False):
         """
         Change the document status from "aheadofprint" to "no_aheadofprint" if
-        MongoDb lastHarvesting document field is older than current date/hour.
+        MongoDb lastHarvesting document field is not in the ids list.
 
         ids - list of aheadofprint document ids
         verbose - if True prints document id into standard output
@@ -179,7 +179,7 @@ class NLM_AheadOfPrint:
 
     def __getDocId(self,
                    filePath,
-                   idXPath="PubmedArticle/MedlineCitation/PMID",
+                   idXPath="MedlineCitationSet/MedlineCitation/PMID",
                    encoding="UTF-8"):
         """
 
@@ -199,45 +199,24 @@ class NLM_AheadOfPrint:
 
         return id_
 
-    def __getDocStatus(self,
-                       filePath,
-                       idXPath="MedlineCitationSet/MedlineCitation/PMID",
-                       encoding="UTF-8"):
-        """
-        filePath - the xml file path
-        idXPath - the xml path to the document status
-        encoding - xml file encoding
-        Returns the id tag of a xml document.
-        """
-        xml = Tools.readFile(filePath, encoding=encoding)
-        xpath = MyXML(xml)
-        xlist = xpath.getXPath(idXPath)
-
-        if len(xlist) == 0:
-            status = None
-        else:
-            status = xlist[0][0]
-
-        return status
-
     def __changeDocStatus2(self,
                            workDir,
+                           fileFilter="*",
                            verbose=False):
         """
         Changes the document status from "aheadofprint" to "no_aheadofprint" if
-        the xml document is also present in 'workDir'
+        the xml document id is also present in 'workDir'
         workDir - directory in where the xml files will be searched
+        fileFilter - Unix shell-style wildcards for file filtering
         verbose - if True prints document id into standard output
         """
         # For all documents in workDir
         listDir = os.listdir(workDir)
 
         for f in listDir:
-            status = self.__getDocStatus(join(workDir, f))
-
             # Searches if there is a mongo document with same id and
             # updates/deletes it.
-            if status == "aheadofprint":
+            if fnmatch.fnmatch(f, fileFilter):
                 id_ = self.__getDocId(join(workDir, f))
                 query = {"_id": id}
                 cursor = self.mdoc.search(query)
@@ -318,12 +297,12 @@ class NLM_AheadOfPrint:
         # Removes duplicated documents from processing directory and workDir
         if verbose:
             print("\nRemoving duplicated xml files.")
-        self.__changeDocStatus2(self.xmlProcDir, verbose)
+        self.__changeDocStatus2(self.xmlProcDir, "medline*.xml", verbose)
 
         # Copies all xml files to the oficial processing directory
         if verbose:
-            print("\nCopying xml files to the processing directory.")
-        Tools.copyFiles(self.xmlOutDir, self.xmlProcDir, fileFilter="*.xml",
+            print("\nMoving xml files to the processing directory.")
+        Tools.moveFiles(self.xmlOutDir, self.xmlProcDir, fileFilter="*.xml",
                         createToDir=False)
 
         if verbose:
