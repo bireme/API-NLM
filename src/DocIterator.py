@@ -100,8 +100,6 @@ class DocIterator:
         if self.verbose:
             if waitSeconds == 30:
                 print('.', end="", flush=True)
-            else:
-                print('+', end="", flush=True)
 
         block = []
         retStart = blkNumber * self.blockSize
@@ -117,6 +115,9 @@ class DocIterator:
                 self.curBlkPos = 0
             else:
                 if waitSeconds <= 3600:  # waits up to 1 hour and try again
+                    if self.verbose:
+                        print("(" + str(waitSeconds) + "s)", end="",
+                              flush=True)
                     time.sleep(waitSeconds)
                     self.__loadBlock(blkNumber, waitSeconds * 2)
                 else:

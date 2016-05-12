@@ -80,7 +80,7 @@ class NLM_API:
         Returns a pair as follows:
             (<<#ofIds>, <list with all ids retrieved from a search>)
         """
-        idTuple = self.getDocIds(dbname, query, retmax=0)
+        idTuple = self.getDocIds(dbname, query, retmax=0, verbose)
         numOfDocs = int(idTuple[0])
 
         idList = []
@@ -91,7 +91,7 @@ class NLM_API:
             if verbose:
                 print(".", end='', flush=True)
             idTuple = self.getDocIds(dbname, query, retmax=max_,
-                                     retstart=startPos)
+                                     retstart=startPos, verbose)
             idList.extend(idTuple[3])
             startPos += max_
 
@@ -107,7 +107,8 @@ class NLM_API:
                   retstart=0,
                   field=None,
                   useHistory=False,
-                  waitSeconds=30):
+                  waitSeconds=30,
+                  verbose=True):
         """
 
         dbname - database name
@@ -119,6 +120,7 @@ class NLM_API:
                      for temporary and future use by efetch.
         waitSeconds - number of seconds the program will sleep it download
                       fails
+        verbose - True if some info should be printed into screen
         Returns a tuple as follows:
                (<#ofIds>, <webenv>, <querykey>, <list of the document ids that
                are retrieved by a query>)
@@ -157,9 +159,12 @@ class NLM_API:
                     ids.append(id_[0])
         else:
             if waitSeconds <= 3600:  # waits up to 1 hour and try again
+                if verbose:
+                    print("(" + str(waitSeconds) + "s)", end="",
+                          flush=True)
                 time.sleep(waitSeconds)
                 self.getDocIds(dbname, query, retmax, retstart, field,
-                               useHistory, waitSeconds * 2)
+                               useHistory, waitSeconds * 2, verbose)
             else:
                 raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +
                                 xmlRes[1] + " url:" + self.url)
