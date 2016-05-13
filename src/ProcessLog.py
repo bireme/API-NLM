@@ -87,18 +87,13 @@ class ProcessLog:
         dateEnd = datetime.strftime(now2, "%Y%m%d")
         hourEnd = datetime.strftime(now2, "%H:%M:%S")
 
-        query = {"date": dateBegin, "hour": hourBegin}
-        totalDocs = self.mongodbDoc.search(query).count()
-
-        doc = {"_id": id_,
-               "process": self.process, "owner": self.owner,
-               "status": status, "totDocs": totalDocs,
-               "dataBegin": dateBegin, "hourBegin": hourBegin,
-               "dataEnd": dateEnd, "hourEnd": hourEnd}
-
+        doc = self.harvesting.getStatDoc(id_, self.process,
+                                         self.owner, status,
+                                         dateBegin, hourBegin,
+                                         dateEnd, hourEnd)
         self.mongodbLog.replaceDoc(doc)
 
-        return dateBegin, hourBegin, dateEnd, hourEnd, status, totalDocs
+        return doc
 
 if __name__ == "__main__":
     # execute only if run as a script
@@ -134,9 +129,12 @@ if __name__ == "__main__":
 
     if verbose_:
         print("Process=" + process)
-        print("DateBegin=" + result[0])
-        print("HourBegin=" + result[1])
-        print("DateEnd=" + result[2])
-        print("HourEnd=" + result[3])
-        print("Status=" + result[4])
-        print("TotalDocs=" + str(result[5]))
+        print("DateBegin=" + result["dateBegin"])
+        print("HourBegin=" + result["hourBegin"])
+        print("DateEnd=" + result["dateEnd"])
+        print("HourEnd=" + result["hourEnd"])
+        print("Status=" + result["status"])
+        print("TotAheadDocs=" + str(result["totAheadDocs"]))
+        print("TotNoAheadDocs=" + str(result["totNoAheadDocs"]))
+        print("NewAheadDocs=" + str(result["newAheadDocs"]))
+        print("NewNoAheadDocs=" + str(result["newNoAheadDocs"]))

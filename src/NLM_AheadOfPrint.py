@@ -60,7 +60,7 @@ class NLM_AheadOfPrint:
     def __insertDocId(self,
                       docId):
         """
-            Inserts an id document into collection "id".
+            Insert an id document into collection "id".
 
             docId - NLM document id
             Returns True is it a new document False is it was already saved
@@ -112,7 +112,7 @@ class NLM_AheadOfPrint:
 
         if verbose:
             print("Checking " + str(id_size) + " documents: ",
-                   end='', flush=True)
+                  end='', flush=True)
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId(id_)

@@ -63,6 +63,47 @@ class NLM_AOPHarvesting(Harvesting):
 
         ahead.syncWorkDir(self.verbose)
 
+    def getStatDoc(self,
+                   id_,
+                   process,
+                   owner,
+                   status,
+                   dateBegin,
+                   hourBegin,
+                   dateEnd,
+                   hourEnd):
+        """
+        Return a dictionary with statistic info.
+
+        id_ - document id
+        process - process name
+        owner - process owner
+        status - process result status
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        dateEnd - process end date YYYYMMDD
+        hourEnd - process end time HH:MM:SS
+        """
+        query0 = {"status": "no_aheadofprint"}
+        query1 = {"date": dateBegin, "hour": hourBegin,
+                  "status": "aheadofprint"}
+        query2 = {"date": dateBegin, "hour": hourBegin,
+                  "status": "no_aheadofprint"}
+        totalAheadDocs = self.mongodbDoc.search({}).count()
+        totalNoAheadDocs = self.mongodbDoc.search(query0).count()
+        newAheadDocs = self.mongodbDoc.search(query1).count()
+        newNoAheadDocs = self.mongodbDoc.search(query2).count()
+
+        doc = {"_id": id_,
+               "process": process, "owner": owner, "status": status,
+               "totAheadDocs": totalAheadDocs,
+               "totNoAheadDocs": totalNoAheadDocs,
+               "newAheadDocs": newAheadDocs,
+               "newNoAheadDocs": newNoAheadDocs,
+               "dateBegin": dateBegin, "hourBegin": hourBegin,
+               "dateEnd": dateEnd, "hourEnd": hourEnd}
+
+        return doc
 
 if __name__ == "__main__":
     # execute only if run as a script

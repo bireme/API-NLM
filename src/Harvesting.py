@@ -42,3 +42,31 @@ class Harvesting(object):
     def harvest(self):
         """Execute the harverst."""
         pass
+
+    def getStatDoc(self,
+                   id_,
+                   process,
+                   owner,
+                   status,
+                   dateBegin,
+                   hourBegin,
+                   dateEnd,
+                   hourEnd):
+        """
+        Return a dictionary with statistic info.
+
+        id_ - document id
+        process - process name
+        owner - process owner
+        status - process result status
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        dateEnd - process end date YYYYMMDD
+        hourEnd - process end time HH:MM:SS
+        """
+        doc = {"_id": id_, "process": process,
+               "owner": owner, "status": status,
+               "dateBegin": dateBegin, "hourBegin": hourBegin,
+               "dateEnd": dateEnd, "hourEnd": hourEnd}
+
+        return doc
