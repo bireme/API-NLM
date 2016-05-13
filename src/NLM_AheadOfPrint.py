@@ -218,11 +218,11 @@ class NLM_AheadOfPrint:
             # updates/deletes it.
             if fnmatch.fnmatch(f, fileFilter):
                 id_ = self.__getDocId(join(workDir, f))
-                query = {"_id": id}
+                query = {"_id": id_}
                 cursor = self.mdoc.search(query)
 
                 if cursor.count() > 0:
-                    doc = self.logDocument.getNewDoc(id, "no_aheadofprint")
+                    doc = self.logDocument.getNewDoc(id_, "no_aheadofprint")
 
                     self.mid.saveDoc(doc)    # create new id mongo doc
 
@@ -233,7 +233,7 @@ class NLM_AheadOfPrint:
                     except OSError:
                         pass
 
-                    self.mdoc.deleteDoc(id)  # delete xml mongo doc
+                    self.mdoc.deleteDoc(id_)  # delete xml mongo doc
 
         if verbose:
             print("Total: " + str(len(listDir)) + " xml files were deleted.")
