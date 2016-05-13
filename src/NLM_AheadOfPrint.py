@@ -218,22 +218,28 @@ class NLM_AheadOfPrint:
             # updates/deletes it.
             if fnmatch.fnmatch(f, fileFilter):
                 id_ = self.__getDocId(join(workDir, f))
-                query = {"_id": id_}
-                cursor = self.mdoc.search(query)
+                if id_ is None:
+                    if verbose:
+                        print("id from xml file [" + str(f) +
+                              "] was not found.")
+                else:
+                    query = {"_id": id_}
+                    cursor = self.mdoc.search(query)
 
-                if cursor.count() > 0:
-                    doc = self.logDocument.getNewDoc(id_, "no_aheadofprint")
+                    if cursor.count() > 0:
+                        doc = self.logDocument.getNewDoc(id_,
+                                                         "no_aheadofprint")
 
-                    self.mid.saveDoc(doc)    # create new id mongo doc
+                        self.mid.saveDoc(doc)    # create new id mongo doc
 
-                    # Delete xml physical file
-                    filename = join(self.xmlOutDir, id_ + ".xml")
-                    try:
-                        os.remove(filename)
-                    except OSError:
-                        pass
+                        # Delete xml physical file
+                        filename = join(self.xmlOutDir, id_ + ".xml")
+                        try:
+                            os.remove(filename)
+                        except OSError:
+                            pass
 
-                    self.mdoc.deleteDoc(id_)  # delete xml mongo doc
+                        self.mdoc.deleteDoc(id_)  # delete xml mongo doc
 
         if verbose:
             print("Total: " + str(len(listDir)) + " xml files were deleted.")
@@ -264,7 +270,7 @@ class NLM_AheadOfPrint:
 
         # Remove no more ahead of print documents
         if verbose:
-            print("\nRemoving no ahead of print documents.")
+            print("\nRemoving no ahead of print documents.", flush=True)
         self.__changeDocStatus(idList, verbose)
 
         # Insert new ahead of print documents
@@ -296,12 +302,13 @@ class NLM_AheadOfPrint:
 
         # Removes duplicated documents from processing directory and workDir
         if verbose:
-            print("\nRemoving duplicated xml files.")
+            print("\nRemoving duplicated xml files.", flush=True)
         self.__changeDocStatus2(self.xmlProcDir, "medline*.xml", verbose)
 
         # Copies all xml files to the oficial processing directory
         if verbose:
-            print("\nMoving xml files to the processing directory.")
+            print("\nMoving xml files to the processing directory.",
+                  flush=True)
         Tools.moveFiles(self.xmlOutDir, self.xmlProcDir, fileFilter="*.xml",
                         createToDir=False)
 
