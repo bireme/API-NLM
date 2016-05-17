@@ -39,21 +39,39 @@ class Harvesting(object):
         self.mid = mongodbId
         self.mdoc = mongodbDoc
 
-    def harvest(self):
-        """Execute the harverst."""
+    def harvest(self,
+                dateBegin,
+                hourBegin):
+        """
+        Execute the harverst.
+
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        """
         pass
 
-    def getStatDoc(self,
-                   id_,
-                   process,
-                   owner,
-                   status,
-                   dateBegin,
-                   hourBegin,
-                   dateEnd,
-                   hourEnd):
+    def moveDocs(self,
+                 dateBegin,
+                 hourBegin):
         """
-        Return a dictionary with statistic info.
+        Move to the working dir the harversted documents.
+
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        """
+        pass
+
+    def getHarvStatDoc(self,
+                       id_,
+                       process,
+                       owner,
+                       status,
+                       dateBegin,
+                       hourBegin,
+                       dateEnd,
+                       hourEnd):
+        """
+        Return a dictionary with harvesting statistic info.
 
         id_ - document id
         process - process name
@@ -66,6 +84,38 @@ class Harvesting(object):
         """
         doc = {"_id": id_, "process": process,
                "owner": owner, "status": status,
+               "dateBegin": dateBegin, "hourBegin": hourBegin,
+               "dateEnd": dateEnd, "hourEnd": hourEnd}
+
+        return doc
+
+    def getMovStatDoc(self,
+                      id_,
+                      process,
+                      owner,
+                      status,
+                      totalMovedDocs,
+                      dateBegin,
+                      hourBegin,
+                      dateEnd,
+                      hourEnd):
+        """
+        Return a dictionary with moving statistic info.
+
+        id_ - document id
+        process - process name
+        owner - process owner
+        status - process result status
+        totalMovedDocs - number of moved docs from harvesting to working
+                         directory
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        dateEnd - process end date YYYYMMDD
+        hourEnd - process end time HH:MM:SS
+        """
+        doc = {"_id": id_, "process": process,
+               "owner": owner, "status": status,
+               "totalMovedDocs": totalMovedDocs,
                "dateBegin": dateBegin, "hourBegin": hourBegin,
                "dateEnd": dateEnd, "hourEnd": hourEnd}
 

@@ -27,7 +27,6 @@ import fnmatch
 import os
 from os.path import join
 import xmltodict
-from LogDocument import LogDocument
 from NLM_API import NLM_API
 from XML import MyXML
 from DocIterator import DocIterator
@@ -41,11 +40,11 @@ class NLM_AheadOfPrint:
     def __init__(self,
                  factory):
         """
+        Constructor.
 
         mongoHost - mongodb server host
         factory - NLM_AOPFactory object
         """
-
         factory.check()
 
         self.api = NLM_API()
@@ -54,18 +53,21 @@ class NLM_AheadOfPrint:
         self.xmlOutDir = factory.xmlOutDir
         self.xmlProcDir = factory.xmlProcDir
         self.encoding = factory.encoding
-        self.logDocument = LogDocument(factory.date, factory.hour,
-                                       factory.process, factory.owner)
+        self.process_ = factory.process
+        self.owner = factory.owner
 
     def __insertDocId(self,
-                      docId):
+                      docId,
+                      dateBegin,
+                      hourBegin):
         """
-            Insert an id document into collection "id".
+        Insert an id document into collection "id".
 
-            docId - NLM document id
-            Returns True is it a new document False is it was already saved
+        docId - NLM document id
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        Returns True is it a new document False is it was already saved
         """
-
         query = {"_id": docId}
 
         # Check if the new document is already stored in Mongo and
@@ -73,27 +75,30 @@ class NLM_AheadOfPrint:
         cursor = self.mdoc.search(query)
 
         isNew = (cursor.count() == 0)
-        # print("isNew1=" + str(isNew))
         if not isNew:
-            # print("arquivo: " + join(self.xmlOutDir, docId + ".xml"))
             # Last processing failed
             isNew = not Tools.existFile(join(self.xmlOutDir, docId + ".xml"))
-            # print("isNew2=" + str(isNew))
             if isNew:
-                # print("antes da delecao:" + docId)
                 # Forces mongo xml document delete
                 if not self.mdoc.deleteDoc(docId):
                     raise Exception("Document id:" + str(docId) +
                                     " deletion failed")
 
         if isNew:
-            doc = self.logDocument.getNewDoc(docId, "aheadofprint")
+            doc = {"id": docId}
+            doc["date"] = dateBegin
+            doc["hour"] = hourBegin
+            doc["status"] = "aheadofprint"
+            doc["process"] = self.process_
+            doc["owner"] = self.owner
             self.mid.saveDoc(doc)  # Save document into mongo
 
         return isNew
 
     def __insertDocs(self,
                      ids,
+                     dateBegin,
+                     hourBegin,
                      xdir=".",
                      encoding="UTF-8",
                      verbose=False):
@@ -103,6 +108,8 @@ class NLM_AheadOfPrint:
         new file with xml content.
 
         ids - a list of NLM document ids
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
         xdir - output file directory
         encoding - output file encoding
         verbose - if True prints the document is inserted
@@ -115,7 +122,7 @@ class NLM_AheadOfPrint:
                   end='', flush=True)
         for id_ in ids:
             # Insert id document into collection "id"
-            isNewDoc = self.__insertDocId(id_)
+            isNewDoc = self.__insertDocId(id_, dateBegin, hourBegin)
             if isNewDoc:
                 newDocs.append(id_)
             if verbose:
@@ -144,12 +151,16 @@ class NLM_AheadOfPrint:
 
     def __changeDocStatus(self,
                           ids,
+                          dateBegin,
+                          hourBegin,
                           verbose=False):
         """
         Change the document status from "aheadofprint" to "no_aheadofprint" if
         MongoDb lastHarvesting document field is not in the ids list.
 
         ids - list of aheadofprint document ids
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
         verbose - if True prints document id into standard output
         """
         # Searches all documents in the doc collection belongs to the ids list.
@@ -161,8 +172,13 @@ class NLM_AheadOfPrint:
             id_ = oldDoc["_id"]
 
             # Update id mongo doc
-            self.mid.saveDoc(doc=self.logDocument.getNewDoc(id_,
-                                                            "no_aheadofprint"))
+            doc = {"id": id_}
+            doc["date"] = dateBegin
+            doc["hour"] = hourBegin
+            doc["status"] = "no_aheadofprint"
+            doc["process"] = self.process_
+            doc["owner"] = self.owner
+            self.mid.saveDoc(doc)
 
             # Deletes the xml physical file
             fpath = join(self.xmlOutDir, id_ + ".xml")
@@ -201,12 +217,16 @@ class NLM_AheadOfPrint:
 
     def __changeDocStatus2(self,
                            workDir,
+                           dateBegin,
+                           hourBegin,
                            fileFilter="*",
                            verbose=False):
         """
-        Changes the document status from "aheadofprint" to "no_aheadofprint" if
+        Change the document status from "aheadofprint" to "no_aheadofprint" if
         the xml document id is also present in 'workDir'
         workDir - directory in where the xml files will be searched
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
         fileFilter - Unix shell-style wildcards for file filtering
         verbose - if True prints document id into standard output
         """
@@ -227,9 +247,12 @@ class NLM_AheadOfPrint:
                     cursor = self.mdoc.search(query)
 
                     if cursor.count() > 0:
-                        doc = self.logDocument.getNewDoc(id_,
-                                                         "no_aheadofprint")
-
+                        doc = {"id": id_}
+                        doc["date"] = dateBegin
+                        doc["hour"] = hourBegin
+                        doc["status"] = "no_aheadofprint"
+                        doc["process"] = self.process_
+                        doc["owner"] = self.owner
                         self.mid.saveDoc(doc)    # create new id mongo doc
 
                         # Delete xml physical file
@@ -245,15 +268,18 @@ class NLM_AheadOfPrint:
             print("Total: " + str(len(listDir)) + " xml files were deleted.")
 
     def process(self,
+                dateBegin,
+                hourBegin,
                 verbose=True):
         """
         Download 'ahead of print' xlm documents and saves then into mongo
-                   and files.
+                  and files.
 
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
         verbose - True if processing progress should be printed into standard
                   output
         """
-
         nowDate = datetime.now()
 
         # Retrive all ahead of print document ids
@@ -271,7 +297,7 @@ class NLM_AheadOfPrint:
         # Remove no more ahead of print documents
         if verbose:
             print("\nRemoving no ahead of print documents.", flush=True)
-        self.__changeDocStatus(idList, verbose)
+        self.__changeDocStatus(idList, dateBegin, hourBegin, verbose)
 
         # Insert new ahead of print documents
         from_ = 0
@@ -282,8 +308,9 @@ class NLM_AheadOfPrint:
                 print("\n" + str(from_+1) + "/" + str(numOfDocs))
 
             to = from_ + loop
-            self.__insertDocs(idList[from_:to], self.xmlOutDir,
-                              self.encoding, verbose)
+            self.__insertDocs(idList[from_:to],
+                              dateBegin, hourBegin,
+                              self.xmlOutDir, self.encoding, verbose)
             from_ += loop
 
         if verbose:
@@ -291,26 +318,34 @@ class NLM_AheadOfPrint:
             print("\nElapsed time: " + str(elapsedTime))
 
     def syncWorkDir(self,
+                    dateBegin,
+                    hourBegin,
                     verbose=True):
         """
         Remove from processing directory all documents which are also in the
         xmlProcDir. After that, moves all documents from processing directory
         into xmlProcDir.
 
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        verbose - True if processing progress should be printed into standard
+                  output
         """
         nowDate = datetime.now()
 
         # Removes duplicated documents from processing directory and workDir
         if verbose:
             print("\nRemoving duplicated xml files.", flush=True)
-        self.__changeDocStatus2(self.xmlProcDir, "medline*.xml", verbose)
+        self.__changeDocStatus2(self.xmlProcDir,
+                                dateBegin, hourBegin,
+                                "medline*.xml", verbose)
 
         # Copies all xml files to the oficial processing directory
         if verbose:
             print("\nMoving xml files to the processing directory.",
                   flush=True)
-        Tools.moveFiles(self.xmlOutDir, self.xmlProcDir, fileFilter="*.xml",
-                        createToDir=False)
+        mov = Tools.moveFiles(self.xmlOutDir, self.xmlProcDir,
+                              fileFilter="*.xml", createToDir=False)
 
         if verbose:
             elapsedTime = datetime.now() - nowDate

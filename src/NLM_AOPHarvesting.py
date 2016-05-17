@@ -41,39 +41,55 @@ class NLM_AOPHarvesting(Harvesting):
         factory - a NLM_AOPFactory object
         verbose - if True debug messages are printed at scream
         """
-        self.factory = factory
-        self.verbose = verbose
         super().__init__(factory.myMongoId, factory.myMongoDoc)
+        self.ahead = NLM_AheadOfPrint(factory)
+        self.verbose = verbose
 
-    def harvest(self):
-        """Do the harvesting of the documents."""
-        ahead = NLM_AheadOfPrint(self.factory)
-
-        print("--------------------------------------------------------------")
-        print("Step 1 - Downloads and saves NLM Pubmed ahead of print " +
-              "documents")
-        print("--------------------------------------------------------------")
-
-        ahead.process(self.verbose)
-
-        print("\n------------------------------------------------------------")
-        print("Step 2 - Copy unique docs to the standard Medline download " +
-              "dir")
-        print("--------------------------------------------------------------")
-
-        ahead.syncWorkDir(self.verbose)
-
-    def getStatDoc(self,
-                   id_,
-                   process,
-                   owner,
-                   status,
-                   dateBegin,
-                   hourBegin,
-                   dateEnd,
-                   hourEnd):
+    def harvest(self,
+                dateBegin,
+                hourBegin):
         """
-        Return a dictionary with statistic info.
+        Do the harvesting of the documents.
+
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        """
+        if self.verbose:
+            print("----------------------------------------------------------")
+            print("Step 1 - Downloads and saves NLM Pubmed ahead of print " +
+                  "documents")
+            print("----------------------------------------------------------")
+
+        self.ahead.process(self.verbose, dateBegin, hourBegin)
+
+    def moveDocs(self,
+                 dateBegin,
+                 hourBegin):
+        """
+        Move to the working dir the harversted documents.
+
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        """
+        if self.verbose:
+            print("----------------------------------------------------------")
+            print("Step 2 - Copy unique docs to the standard Medline " +
+                  "download dir")
+            print("----------------------------------------------------------")
+
+        self.ahead.syncWorkDir(self.verbose, dateBegin, hourBegin)
+
+    def getHarvStatDoc(self,
+                       id_,
+                       process,
+                       owner,
+                       status,
+                       dateBegin,
+                       hourBegin,
+                       dateEnd,
+                       hourEnd):
+        """
+        Return a dictionary with harvesting statistic info.
 
         id_ - document id
         process - process name
@@ -90,9 +106,9 @@ class NLM_AOPHarvesting(Harvesting):
         query2 = {"date": dateBegin, "hour": hourBegin,
                   "status": "no_aheadofprint"}
         totalAheadDocs = self.mdoc.search({}).count()
-        totalNoAheadDocs = self.mdoc.search(query0).count()
-        newAheadDocs = self.mdoc.search(query1).count()
-        newNoAheadDocs = self.mdoc.search(query2).count()
+        totalNoAheadDocs = self.mid.search(query0).count()
+        newAheadDocs = self.mid.search(query1).count()
+        newNoAheadDocs = self.mid.search(query2).count()
 
         doc = {"_id": id_,
                "process": process, "owner": owner, "status": status,
@@ -105,15 +121,48 @@ class NLM_AOPHarvesting(Harvesting):
 
         return doc
 
+    def getMovStatDoc(self,
+                      id_,
+                      process,
+                      owner,
+                      status,
+                      totalMovedDocs,
+                      dateBegin,
+                      hourBegin,
+                      dateEnd,
+                      hourEnd):
+        """
+        Return a dictionary with moving statistic info.
+
+        id_ - document id
+        process - process name
+        owner - process owner
+        status - process result status
+        totalMovedDocs - number of moved docs from harvesting to working
+                         directory
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        dateEnd - process end date YYYYMMDD
+        hourEnd - process end time HH:MM:SS
+        """
+        query = {"date": dateBegin, "hour": hourBegin,
+                 "status": "no_aheadofprint"}
+        newNoAheadDocs = self.mid.search(query).count()
+
+        doc = {"_id": id_,
+               "process": process, "owner": owner, "status": status,
+               "totMovedDocs": totalMovedDocs,
+               "totNoAheadDocs": totalNoAheadDocs,
+               "newNoAheadDocs": newNoAheadDocs,
+               "dateBegin": dateBegin, "hourBegin": hourBegin,
+               "dateEnd": dateEnd, "hourEnd": hourEnd}
+
+        return doc
+
 if __name__ == "__main__":
     # execute only if run as a script
 
     verbose_ = True
-
-    now = datetime.now()
-    date = datetime.strftime(now, "%Y-%m-%d")
-    hour = datetime.strftime(now, "%H:%M:%S")
-
     mongoHost = "ts01vm.bireme.br"
     dbName = "db_AheadOfPrint"
     idColName = "col_Id"
@@ -126,8 +175,15 @@ if __name__ == "__main__":
     factory_.setMyMongoDoc(mdoc)
     factory_.setXmlOutDir("../xml")
     factory_.setXmlProcDir("")
-    factory_.setDate(date)
-    factory_.setHour(hour)
 
     harvesting = NLM_AOPHarvesting(factory_, verbose_)
-    harvesting.harvest()
+
+    now1 = datetime.now()
+    date1 = datetime.strftime(now1, "%Y-%m-%d")
+    hour1 = datetime.strftime(now1, "%H:%M:%S")
+    harvesting.harvest(date1, hour1)
+
+    now2 = datetime.now()
+    date2 = datetime.strftime(now2, "%Y-%m-%d")
+    hour2 = datetime.strftime(now2, "%H:%M:%S")
+    harvesting.moveDocs(date2, hour2)

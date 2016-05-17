@@ -29,8 +29,6 @@ class NLM_AOPFactory:
         self.myMongoDoc = None
         self.xmlOutDir = None
         self.xmlProcDir = None
-        self.date = None
-        self.hour = None
         self.process = None
         self.owner = None
         self.encoding = "UTF-8"
@@ -65,22 +63,6 @@ class NLM_AOPFactory:
         xmlProcDir - directory path of xml files of standard medline processing
         """
         self.xmlProcDir = xmlProcDir
-        return self
-
-    def setDate(self, date):
-        """
-
-        date - current date string with format: YY-MM-DD
-        """
-        self.date = date
-        return self
-
-    def setHour(self, hour):
-        """
-
-        date - current time string with format: HH:MM:SS
-        """
-        self.hour = hour
         return self
 
     def setProcess(self, process):
@@ -120,11 +102,7 @@ class NLM_AOPFactory:
             raise Exception("xmlOutDir is None")
         if self.xmlProcDir is None:
             raise Exception("xmlProcDir is None")
-        if self.date is None:
-            raise Exception("date is None")
         if self.process is None:
             raise Exception("process is None")
         if self.owner is None:
             raise Exception("owner is None")
-        if self.hour is None:
-            raise Exception("hour is None")

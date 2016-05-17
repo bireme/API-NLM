@@ -78,6 +78,7 @@ def moveFiles(fromDir,
                   it does not exists
     moveSubDirs - True if besides standard files, subdirectories also should
                   be moved
+    Returns the total number of moved files
     """
     if not isdir(fromDir):
         raise Exception("fromDir does not exists")
@@ -88,6 +89,8 @@ def moveFiles(fromDir,
         else:
             raise Exception("toDir does not exists")
 
+    tot = 0
+
     for f in listdir(fromDir):
         if fnmatch.fnmatch(f, fileFilter):
             from_ = join(fromDir, f)
@@ -95,9 +98,12 @@ def moveFiles(fromDir,
             if isdir(from_):
                 # print("diretorio:" + f)
                 if moveSubDirs:
-                    shutil.move(from_, to)
+                    tot += moveFiles(from_, to,
+                                     fileFilter, createToDir, moveSubDirs)
             else:
-                shutil.move(from_, to)
+                tot += shutil.move(from_, to)
+
+    return tot
 
 
 def copyFiles(fromDir,
@@ -115,6 +121,7 @@ def copyFiles(fromDir,
                   does not exists
     copySubDirs - True if besides standard files, subdirectories also should
                   be copied
+    Returns the total number of copied files
     """
     if not isdir(fromDir):
         raise Exception("fromDir does not exists")
@@ -125,6 +132,8 @@ def copyFiles(fromDir,
         else:
             raise Exception("toDir does not exists")
 
+    tot = 0
+
     for f in listdir(fromDir):
         if fnmatch.fnmatch(f, fileFilter):
             from_ = join(fromDir, f)
@@ -132,9 +141,12 @@ def copyFiles(fromDir,
             if isdir(from_):
                 print("diretorio:" + f)
                 if copySubDirs:
-                    shutil.copy2(from_, to)
+                    tot += copyFiles(from_, to, fileFilter, createToDir,
+                                     copySubDirs)
             else:
-                shutil.copy2(from_, to)
+                tot += shutil.copy2(from_, to)
+
+    return tot
 
 
 def readFile(filePath,
