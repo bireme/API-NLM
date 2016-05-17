@@ -119,11 +119,10 @@ def loadUrl(url,
     try:
         response = urlopen(req)
         content = response.read()
+        resp = (200, content)
     except HTTPError as e:
         resp = (e.code, responses[e.code][0])
-    except URLError as e:
-        resp = (-1, str(e.reason))
-    else:
-        resp = (200, content)
+    except BaseException as bex:
+        resp = (-1, str(bex))
 
     return resp
