@@ -68,7 +68,7 @@ class ProcessLog:
         hourBegin = datetime.strftime(now, "%H:%M:%S")
         id_ = dateBegin + "-" + hourBegin
         doc = {"_id": id_, "process": self.process + "_harvesting",
-               "owner": self.owner, "status": "processing",
+               "owner": self.owner, "status": "in process",
                "dataBegin": dateBegin, "hourBegin": hourBegin}
         self.mongodbLog.saveDoc(doc)
 
@@ -104,7 +104,7 @@ class ProcessLog:
         hourBegin = datetime.strftime(now, "%H:%M:%S")
         id_ = dateBegin + "-" + hourBegin
         doc = {"_id": id_, "process": self.process + "_moving",
-               "owner": self.owner, "status": "processing",
+               "owner": self.owner, "status": "in process",
                "dataBegin": dateBegin, "hourBegin": hourBegin}
         self.mongodbLog.saveDoc(doc)
 
@@ -161,12 +161,25 @@ if __name__ == "__main__":
 
     if verbose_:
         print("Process=" + process)
+        print("Owner=" + result["owner"])
+        print("Status=" + result["status"])
         print("DateBegin=" + result["dateBegin"])
         print("HourBegin=" + result["hourBegin"])
         print("DateEnd=" + result["dateEnd"])
         print("HourEnd=" + result["hourEnd"])
-        print("Status=" + result["status"])
         print("TotAheadDocs=" + str(result["totAheadDocs"]))
         print("TotNoAheadDocs=" + str(result["totNoAheadDocs"]))
         print("NewAheadDocs=" + str(result["newAheadDocs"]))
         print("NewNoAheadDocs=" + str(result["newNoAheadDocs"]))
+
+    result = log.moveDocs()
+
+    if verbose_:
+        print("Process=" + process)
+        print("Owner=" + result["owner"])
+        print("Status=" + result["status"])
+        print("DateBegin=" + result["dateBegin"])
+        print("HourBegin=" + result["hourBegin"])
+        print("DateEnd=" + result["dateEnd"])
+        print("HourEnd=" + result["hourEnd"])
+        print("TotMovedDocs=" + str(result["totMovedDocs"]))

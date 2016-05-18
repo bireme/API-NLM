@@ -63,6 +63,33 @@ def xmlToFile(docId,
     f.close()
 
 
+def moveFile(fromDir,
+             toDir,
+             fileName,
+             createToDir=True):
+    """
+    Move a file from a directory to another one.
+
+    fromDir - origin directory path
+    toDir - destination directory path
+    fileName - the name of file that will be moved
+    createToDir - True if the destination directory should be created if
+                  it does not exists
+    """
+    if not isdir(fromDir):
+        raise Exception("fromDir does not exists")
+
+    if not exists(toDir):
+        if createToDir:
+            makedirs(toDir)
+        else:
+            raise Exception("toDir does not exists")
+
+    from_ = join(fromDir, fileName)
+    to = join(toDir, fileName)
+    shutil.move(from_, to)
+
+
 def moveFiles(fromDir,
               toDir,
               fileFilter="*",

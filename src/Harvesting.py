@@ -94,7 +94,6 @@ class Harvesting(object):
                       process,
                       owner,
                       status,
-                      totalMovedDocs,
                       dateBegin,
                       hourBegin,
                       dateEnd,
@@ -106,8 +105,6 @@ class Harvesting(object):
         process - process name
         owner - process owner
         status - process result status
-        totalMovedDocs - number of moved docs from harvesting to working
-                         directory
         dateBegin - process begin date YYYYMMDD
         hourBegin - process begin time HH:MM:SS
         dateEnd - process end date YYYYMMDD

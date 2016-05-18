@@ -126,7 +126,6 @@ class NLM_AOPHarvesting(Harvesting):
                       process,
                       owner,
                       status,
-                      totalMovedDocs,
                       dateBegin,
                       hourBegin,
                       dateEnd,
@@ -135,24 +134,21 @@ class NLM_AOPHarvesting(Harvesting):
         Return a dictionary with moving statistic info.
 
         id_ - document id
-        process - process name
-        owner - process owner
-        status - process result status
-        totalMovedDocs - number of moved docs from harvesting to working
-                         directory
+        process - moving process name
+        owner - moving process owner
+        status - moving process status result
         dateBegin - process begin date YYYYMMDD
         hourBegin - process begin time HH:MM:SS
         dateEnd - process end date YYYYMMDD
         hourEnd - process end time HH:MM:SS
         """
         query = {"date": dateBegin, "hour": hourBegin,
-                 "status": "no_aheadofprint"}
-        newNoAheadDocs = self.mid.search(query).count()
+                 "status": "moved"}
+        totalMovedDocs = self.mid.search(query).count()
 
         doc = {"_id": id_,
                "process": process, "owner": owner, "status": status,
                "totMovedDocs": totalMovedDocs,
-               "newNoAheadDocs": newNoAheadDocs,
                "dateBegin": dateBegin, "hourBegin": hourBegin,
                "dateEnd": dateEnd, "hourEnd": hourEnd}
 

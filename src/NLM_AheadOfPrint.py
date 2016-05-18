@@ -70,7 +70,7 @@ class NLM_AheadOfPrint:
         """
         # Document is new if it is not in id collection or if its status is
         # 'in process' meaning that a previous download was unfinished.
-        query = {"id": docId, "status": {"$not": "in process"}}
+        query = {"id": docId, "status": {"$ne": "in process"}}
         cursor = self.mid.search(query)
         isNew = (cursor.count() == 0)
 
@@ -226,7 +226,6 @@ class NLM_AheadOfPrint:
         return id_
 
     def __changeDocStatus2(self,
-                           workDir,
                            dateBegin,
                            hourBegin,
                            fileFilter="*",
@@ -234,19 +233,18 @@ class NLM_AheadOfPrint:
         """
         Change the document status from "aheadofprint" to "no_aheadofprint" if
         the xml document id is also present in 'workDir'
-        workDir - directory in where the xml files will be searched
         dateBegin - process begin date YYYYMMDD
         hourBegin - process begin time HH:MM:SS
         fileFilter - Unix shell-style wildcards for file filtering
         verbose - if True prints document id into standard output
         """
         # For all documents in workDir
-        listDir = os.listdir(workDir)
+        listDir = os.listdir(self.xmlProcDir)
         for f in listDir:
             # Searches if there is a mongo document with same id and
             # updates/deletes it.
             if fnmatch.fnmatch(f, fileFilter):
-                id_ = self.__getDocId(join(workDir, f))
+                id_ = self.__getDocId(join(self.xmlProcDir, f))
                 if id_ is None:
                     if verbose:
                         print("id from xml file [" + str(f) +
@@ -334,7 +332,7 @@ class NLM_AheadOfPrint:
                     verbose=True):
         """
         Remove from processing directory all documents which are also in the
-        xmlProcDir. After that, moves all documents from processing directory
+        xmlProcDir. After that, moves all documents from download directory
         into xmlProcDir.
 
         dateBegin - process begin date YYYYMMDD
@@ -347,17 +345,42 @@ class NLM_AheadOfPrint:
         # Removes duplicated documents from processing directory and workDir
         if verbose:
             print("\nRemoving duplicated xml files.", flush=True)
-        self.__changeDocStatus2(self.xmlProcDir,
-                                dateBegin, hourBegin,
-                                "medline*.xml", verbose)
+        self.__changeDocStatus2(dateBegin, hourBegin, "medline*.xml", verbose)
 
         # Copies all xml files to the oficial processing directory
         if verbose:
             print("\nMoving xml files to the processing directory.",
                   flush=True)
 
-        Tools.moveFiles(self.xmlOutDir, self.xmlProcDir,
-                        fileFilter="*.xml", createToDir=False)
+        # For all documents in download dir
+        listDir = os.listdir(self.xmlOutDir)
+        for f in listDir:
+            if fnmatch.fnmatch(f, "*.xml"):
+                id_ = self.__getDocId(join(self.xmlProcDir, f))
+                if id_ is None:
+                    if verbose:
+                        print("id from xml file [" + str(f) +
+                              "] was not found.")
+                else:  # If there is such document
+                    query = {"id": id_, "status": "aheadofprint"}
+                    cursor = self.mid.search(query)
+                    if cursor.count() > 0:
+                        # Move xml physical file
+                        filename = join(self.xmlOutDir, id_ + ".xml")
+                        try:
+                            Tools.moveFile(self.xmlOutDir, self.xmlProcDir,
+                                           filename, createToDir=False)
+                        except OSError:
+                            pass
+
+                        # Update document status from mongo id collection
+                        doc = {"id": id_}
+                        doc["date"] = dateBegin
+                        doc["hour"] = hourBegin
+                        doc["status"] = "moved"
+                        doc["process"] = self.process_
+                        doc["owner"] = self.owner
+                        self.mid.saveDoc(doc)    # create new id mongo doc
 
         if verbose:
             elapsedTime = datetime.now() - nowDate
