@@ -58,7 +58,8 @@ class MyMongo:
 
     def replaceDoc(self, doc):
         """
-        Replaces an exiting saved document by a new one with the same _id field
+        Replace an exiting saved document by a new one with the same _id field.
+
         doc - mongo document represented as a dictionary
         """
         _id = {'_id': doc['_id']}
@@ -83,10 +84,7 @@ class MyMongo:
         return self.col.delete_one(idd).deleted_count == 1
 
     def numOfDocs(self):
-        """
-
-        Returns the number of documents of this collection
-        """
+        """Return the number of documents of this collection."""
         return self.col.count()
 
     def createIndex(self, name, fieldNames):
@@ -123,10 +121,7 @@ class MyMongo:
         return idx
 
     def dropCollection(self):
-        """
-        Delete the collection from the database.
-        """
-
+        """Delete the collection from the database."""
         self.db.drop_collection(self.col)
 
     def search(self,

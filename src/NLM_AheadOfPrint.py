@@ -68,30 +68,34 @@ class NLM_AheadOfPrint:
         hourBegin - process begin time HH:MM:SS
         Returns True is it a new document False is it was already saved
         """
-        query = {"_id": docId}
-
-        # Check if the new document is already stored in Mongo and
-        # physical file
-        cursor = self.mdoc.search(query)
-
+        # Document is new if it is not in id collection or if its status is
+        # 'in process' meaning that a previous download was unfinished.
+        query = {"id": docId, "status": {"$not": "in process"}}
+        cursor = self.mid.search(query)
         isNew = (cursor.count() == 0)
-        if not isNew:
-            # Last processing failed
-            isNew = not Tools.existFile(join(self.xmlOutDir, docId + ".xml"))
-            if isNew:
-                # Forces mongo xml document delete
-                if not self.mdoc.deleteDoc(docId):
-                    raise Exception("Document id:" + str(docId) +
-                                    " deletion failed")
 
         if isNew:
             doc = {"id": docId}
             doc["date"] = dateBegin
             doc["hour"] = hourBegin
-            doc["status"] = "aheadofprint"
+            doc["status"] = "in process"
             doc["process"] = self.process_
             doc["owner"] = self.owner
             self.mid.saveDoc(doc)  # Save document into mongo
+        else:
+            # If document is not new and its status is not ahead of print
+            # status='no_aheadofprint' or status='moved',
+            # delete the physical file and from doc collection.
+            oldDoc = cursor[0]
+            if oldDoc["status"] != 'aheadofprint':
+                fpath = join(self.xmlOutDir, docId + ".xml")
+                if Tools.existFile(fpath):
+                    try:
+                        Tools.removeFile(fpath)
+                    except OSError:
+                        raise Exception("Document id:" + str(docId) +
+                                        " deletion failed")
+                self.mdoc.deleteDoc(docId)
 
         return isNew
 
@@ -144,7 +148,13 @@ class NLM_AheadOfPrint:
                 Tools.xmlToFile(docId, xml, xdir, encoding)  # save into file
                 docDict = xmltodict.parse(xml)
                 doc = {"_id": docId, "doc": docDict}
-                self.mdoc.saveDoc(doc)                       # save into mongo
+                self.mdoc.saveDoc(doc)  # save into mongo 'doc' collection
+
+                # Change document document status from 'in process' to
+                # 'aheadofprint' in id collection.
+                doc = self.mid.search({"id": docId})[0]
+                doc["status"] = "aheadofprint"
+                self.mdoc.saveDoc(doc)   # save into mongo 'id' collection
 
             if verbose:
                 print()  # to print a new line
@@ -163,13 +173,23 @@ class NLM_AheadOfPrint:
         hourBegin - process begin time HH:MM:SS
         verbose - if True prints document id into standard output
         """
-        # Searches all documents in the doc collection belongs to the ids list.
-        # if not delete it.
+        # Searches all documents in the 'doc' collection that belongs to the
+        # ids list. If document is not in the list, delete it.
         query = {"_id": {"$nin": ids}}
         cursor = self.mdoc.search(query)
 
         for oldDoc in cursor:
             id_ = oldDoc["_id"]
+
+            # Deletes the xml physical file
+            fpath = join(self.xmlOutDir, id_ + ".xml")
+            try:
+                Tools.removeFile(fpath)
+            except OSError:
+                pass
+
+            # Deletes document from 'doc' collection
+            self.mdoc.deleteDoc(id_)
 
             # Update id mongo doc
             doc = {"id": id_}
@@ -179,16 +199,6 @@ class NLM_AheadOfPrint:
             doc["process"] = self.process_
             doc["owner"] = self.owner
             self.mid.saveDoc(doc)
-
-            # Deletes the xml physical file
-            fpath = join(self.xmlOutDir, id_ + ".xml")
-            try:
-                Tools.removeFile(fpath)
-            except OSError:
-                pass
-
-            # Deletes document from collection "xml"
-            self.mdoc.deleteDoc(id_)
 
         if verbose:
             print("Total: " + str(cursor.count()) + " xml files were deleted.")
@@ -232,7 +242,6 @@ class NLM_AheadOfPrint:
         """
         # For all documents in workDir
         listDir = os.listdir(workDir)
-
         for f in listDir:
             # Searches if there is a mongo document with same id and
             # updates/deletes it.
@@ -243,18 +252,10 @@ class NLM_AheadOfPrint:
                         print("id from xml file [" + str(f) +
                               "] was not found.")
                 else:
+                    # If there is such document
                     query = {"_id": id_}
                     cursor = self.mdoc.search(query)
-
                     if cursor.count() > 0:
-                        doc = {"id": id_}
-                        doc["date"] = dateBegin
-                        doc["hour"] = hourBegin
-                        doc["status"] = "no_aheadofprint"
-                        doc["process"] = self.process_
-                        doc["owner"] = self.owner
-                        self.mid.saveDoc(doc)    # create new id mongo doc
-
                         # Delete xml physical file
                         filename = join(self.xmlOutDir, id_ + ".xml")
                         try:
@@ -262,7 +263,17 @@ class NLM_AheadOfPrint:
                         except OSError:
                             pass
 
-                        self.mdoc.deleteDoc(id_)  # delete xml mongo doc
+                        # Delete document from mongo doc collection
+                        self.mdoc.deleteDoc(id_)
+
+                        # Update document status from mongo id collection
+                        doc = {"id": id_}
+                        doc["date"] = dateBegin
+                        doc["hour"] = hourBegin
+                        doc["status"] = "no_aheadofprint"
+                        doc["process"] = self.process_
+                        doc["owner"] = self.owner
+                        self.mid.saveDoc(doc)    # create new id mongo doc
 
         if verbose:
             print("Total: " + str(len(listDir)) + " xml files were deleted.")
@@ -281,7 +292,7 @@ class NLM_AheadOfPrint:
                   output
         """
         nowDate = datetime.now()
-        
+
         # Retrive all ahead of print document ids
         if verbose:
             print("\nRetrieving document ids: ", end='')
@@ -344,8 +355,9 @@ class NLM_AheadOfPrint:
         if verbose:
             print("\nMoving xml files to the processing directory.",
                   flush=True)
-        mov = Tools.moveFiles(self.xmlOutDir, self.xmlProcDir,
-                              fileFilter="*.xml", createToDir=False)
+
+        Tools.moveFiles(self.xmlOutDir, self.xmlProcDir,
+                        fileFilter="*.xml", createToDir=False)
 
         if verbose:
             elapsedTime = datetime.now() - nowDate

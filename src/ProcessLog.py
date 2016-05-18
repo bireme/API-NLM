@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     verbose_ = True
 
-    #mongoHost = "ts01vm.bireme.br"
+    # mongoHost = "ts01vm.bireme.br"
     mongoHost = "mongodb.bireme.br"
     dbName = "db_AheadOfPrintx"
     mid = MyMongo(dbName, "col_Id", mongoHost)
