@@ -116,7 +116,7 @@ class NLM_AheadOfPrint:
         """
         newDocs = []
         id_size = len(ids)
-
+        # print("dateBegin=" + dateBegin)
         if verbose:
             print("Checking " + str(id_size) + " documents: ",
                   end='', flush=True)
@@ -281,7 +281,7 @@ class NLM_AheadOfPrint:
                   output
         """
         nowDate = datetime.now()
-
+        
         # Retrive all ahead of print document ids
         if verbose:
             print("\nRetrieving document ids: ", end='')

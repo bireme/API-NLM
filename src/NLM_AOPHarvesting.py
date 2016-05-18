@@ -60,7 +60,7 @@ class NLM_AOPHarvesting(Harvesting):
                   "documents")
             print("----------------------------------------------------------")
 
-        self.ahead.process(self.verbose, dateBegin, hourBegin)
+        self.ahead.process(dateBegin, hourBegin, self.verbose)
 
     def moveDocs(self,
                  dateBegin,
@@ -152,7 +152,6 @@ class NLM_AOPHarvesting(Harvesting):
         doc = {"_id": id_,
                "process": process, "owner": owner, "status": status,
                "totMovedDocs": totalMovedDocs,
-               "totNoAheadDocs": totalNoAheadDocs,
                "newNoAheadDocs": newNoAheadDocs,
                "dateBegin": dateBegin, "hourBegin": hourBegin,
                "dateEnd": dateEnd, "hourEnd": hourEnd}
