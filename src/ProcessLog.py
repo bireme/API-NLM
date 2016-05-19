@@ -98,7 +98,6 @@ class ProcessLog:
 
         Returns a dictionary with harvest moving statistics.
         """
-        moved = 0
         now = datetime.now()
         dateBegin = datetime.strftime(now, "%Y%m%d")
         hourBegin = datetime.strftime(now, "%H:%M:%S")
@@ -109,13 +108,12 @@ class ProcessLog:
         self.mongodbLog.saveDoc(doc)
 
         try:
-            moved = self.harvesting.moveDocs()
+            self.harvesting.moveDocs()
             status = "finished"
         except (Exception, RuntimeError) as ex:
             traceback.print_stack()
             print("Exception/error generated: " + str(ex))
             status = "broken"
-            moved = 0
 
         now2 = datetime.now()
         dateEnd = datetime.strftime(now2, "%Y%m%d")
@@ -124,8 +122,9 @@ class ProcessLog:
                "owner": self.owner, "status": status,
                "dataBegin": dateBegin, "hourBegin": hourBegin,
                "dataEnd": dateEnd, "hourEnd": hourEnd}
+
         doc = self.harvesting.getMovStatDoc(id_, self.process + "_moving",
-                                            self.owner, status, moved,
+                                            self.owner, status,
                                             dateBegin, hourBegin,
                                             dateEnd, hourEnd)
         self.mongodbLog.replaceDoc(doc)
