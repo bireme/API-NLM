@@ -181,7 +181,8 @@ class NLM_AheadOfPrint:
 
         for oldDoc in cursor:
             id_ = oldDoc["_id"]
-
+            print("passei aqui 2")
+            print(id_)
             # Deletes the xml physical file
             fpath = join(self.xmlOutDir, id_ + ".xml")
             try:
@@ -200,7 +201,7 @@ class NLM_AheadOfPrint:
             doc["process"] = self.process_
             doc["owner"] = self.owner
             self.mid.saveDoc(doc)
-            print("passei aqui 2")
+            print("passei aqui fim")
         if verbose:
             print("Total: " + str(cursor.count()) + " xml files were deleted.")
 
