@@ -154,7 +154,7 @@ class NLM_AheadOfPrint:
                 # 'aheadofprint' in id collection.
                 doc = self.mid.search({"id": docId})[0]
                 doc["status"] = "aheadofprint"
-                self.mid.saveDoc(doc)   # save into mongo 'id' collection
+                self.mid.replaceDoc(doc)   # save into mongo 'id' collection
 
             if verbose:
                 print()  # to print a new line
@@ -364,7 +364,7 @@ class NLM_AheadOfPrint:
                     cursor = self.mid.search(query)
                     if cursor.count() > 0:
                         # Move xml physical file
-                        filename = join(self.xmlOutDir, id_ + ".xml")
+                        filename = id_ + ".xml"
                         try:
                             Tools.moveFile(self.xmlOutDir, self.xmlProcDir,
                                            filename, createToDir=False)
