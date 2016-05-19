@@ -173,6 +173,7 @@ class NLM_AheadOfPrint:
         hourBegin - process begin time HH:MM:SS
         verbose - if True prints document id into standard output
         """
+        print("passei aqui 1")
         # Searches all documents in the 'doc' collection that belongs to the
         # ids list. If document is not in the list, delete it.
         query = {"_id": {"$nin": ids}}
@@ -199,7 +200,7 @@ class NLM_AheadOfPrint:
             doc["process"] = self.process_
             doc["owner"] = self.owner
             self.mid.saveDoc(doc)
-
+            print("passei aqui 2")
         if verbose:
             print("Total: " + str(cursor.count()) + " xml files were deleted.")
 
