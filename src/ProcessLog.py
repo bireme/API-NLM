@@ -118,11 +118,6 @@ class ProcessLog:
         now2 = datetime.now()
         dateEnd = datetime.strftime(now2, "%Y%m%d")
         hourEnd = datetime.strftime(now2, "%H:%M:%S")
-        doc = {"_id": id_, "process": self.process + "_moving",
-               "owner": self.owner, "status": status,
-               "dataBegin": dateBegin, "hourBegin": hourBegin,
-               "dataEnd": dateEnd, "hourEnd": hourEnd}
-
         doc = self.harvesting.getMovStatDoc(id_, self.process + "_moving",
                                             self.owner, status,
                                             dateBegin, hourBegin,
@@ -138,13 +133,13 @@ if __name__ == "__main__":
 
     # mongoHost = "ts01vm.bireme.br"
     mongoHost = "mongodb.bireme.br"
-    dbName = "db_AheadOfPrintx"
+    dbName = "db_AheadOfPrint"
     mid = MyMongo(dbName, "col_Id", mongoHost)
     mdoc = MyMongo(dbName, "col_Doc", mongoHost)
     mlog = MyMongo(dbName, "col_Log", mongoHost)
 
     process = "aheadofprint"
-    owner = "me"
+    owner = "serverofi5"
 
     factory_ = NLM_AOPFactory()
     factory_.setMyMongoId(mid)

@@ -154,7 +154,7 @@ class NLM_AheadOfPrint:
                 # 'aheadofprint' in id collection.
                 doc = self.mid.search({"id": docId})[0]
                 doc["status"] = "aheadofprint"
-                self.mdoc.saveDoc(doc)   # save into mongo 'id' collection
+                self.mid.saveDoc(doc)   # save into mongo 'id' collection
 
             if verbose:
                 print()  # to print a new line
@@ -173,7 +173,6 @@ class NLM_AheadOfPrint:
         hourBegin - process begin time HH:MM:SS
         verbose - if True prints document id into standard output
         """
-        print("passei aqui 1")
         # Searches all documents in the 'doc' collection that belongs to the
         # ids list. If document is not in the list, delete it.
         query = {"_id": {"$nin": ids}}
@@ -181,8 +180,6 @@ class NLM_AheadOfPrint:
 
         for oldDoc in cursor:
             id_ = oldDoc["_id"]
-            print("passei aqui 2")
-            print(id_)
             # Deletes the xml physical file
             fpath = join(self.xmlOutDir, id_ + ".xml")
             try:
@@ -201,7 +198,6 @@ class NLM_AheadOfPrint:
             doc["process"] = self.process_
             doc["owner"] = self.owner
             self.mid.saveDoc(doc)
-            print("passei aqui fim")
         if verbose:
             print("Total: " + str(cursor.count()) + " xml files were deleted.")
 
