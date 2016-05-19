@@ -108,7 +108,7 @@ class ProcessLog:
         self.mongodbLog.saveDoc(doc)
 
         try:
-            self.harvesting.moveDocs()
+            self.harvesting.moveDocs(dateBegin, hourBegin)
             status = "finished"
         except (Exception, RuntimeError) as ex:
             traceback.print_stack()
