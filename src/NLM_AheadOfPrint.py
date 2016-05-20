@@ -243,7 +243,7 @@ class NLM_AheadOfPrint:
         # For all documents in workDir
         listDir = os.listdir(self.xmlProcDir)
         for f in listDir:
-            cur =+ 1
+            cur += 1
             if cur % tell == 0:
                 print(".", end='', flush=True)
             # Searches if there is a mongo document with same id and
