@@ -204,7 +204,7 @@ class NLM_AheadOfPrint:
 
     def __getDocIdList(self,
                        filePath,
-                       idXPath="MedlineCitationSet/MedlineCitation/PMID",
+                       idXPath,
                        encoding="UTF-8"):
         """
 
@@ -248,7 +248,8 @@ class NLM_AheadOfPrint:
             # updates/deletes it.
             if fnmatch.fnmatch(f, fileFilter):
                 # Get the xml doc id from file
-                idList = self.__getDocIdList(join(self.xmlProcDir, f))
+                idList = self.__getDocIdList(join(self.xmlProcDir, f),
+                              idXPath="MedlineCitationSet/MedlineCitation/PMID")
                 for id_ in idList:
                     # If there is such document
                     query = {"_id": id_}
@@ -361,10 +362,12 @@ class NLM_AheadOfPrint:
                 print(".", end="", flush=True)
 
             if fnmatch.fnmatch(f, "*.xml"):
-                idList = self.__getDocIdList(join(self.xmlOutDir, f))
+                idList = self.__getDocIdList(join(self.xmlOutDir, f),
+                                   idXPath="PubmedArticle/MedlineCitation/PMID")
                 if len(idList) == 0:
                     if verbose:
-                        print("id from xml file [" + str(f) +
+                        print("id from xml file [" +
+                              str(join(self.xmlOutDir, f)) +
                               "] was not found.")
                 else:  # If there is such document
                     id_ = idList[0]
