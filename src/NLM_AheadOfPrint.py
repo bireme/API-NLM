@@ -236,11 +236,16 @@ class NLM_AheadOfPrint:
         fileFilter - Unix shell-style wildcards for file filtering
         verbose - if True prints document id into standard output
         """
-        removed = 0 # Removed xml files
+        removed = 0  # Removed xml files
+        tell = 20
+        cur = 0
 
         # For all documents in workDir
         listDir = os.listdir(self.xmlProcDir)
         for f in listDir:
+            cur =+ 1
+            if cur % tell == 0:
+                print(".", end='', flush=True)
             # Searches if there is a mongo document with same id and
             # updates/deletes it.
             if fnmatch.fnmatch(f, fileFilter):
@@ -346,12 +351,12 @@ class NLM_AheadOfPrint:
 
         # Removes duplicated documents from processing directory and workDir
         if verbose:
-            print("\nRemoving duplicated xml files.", flush=True)
+            print("\nRemoving duplicated xml files: ", end="", flush=True)
         self.__changeDocStatus2(dateBegin, hourBegin, "medline*.xml", verbose)
 
         # Copies all xml files to the oficial processing directory
         if verbose:
-            print("\nMoving xml files to the processing directory.",
+            print("\n\nMoving xml files to the processing directory.",
                   flush=True)
 
         # For all documents in download dir
