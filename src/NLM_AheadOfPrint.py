@@ -355,7 +355,7 @@ class NLM_AheadOfPrint:
 
         #  For all documents in download dir
         listDir = os.listdir(self.xmlOutDir)
-        print(listDir)
+
         for f in listDir:
             print("f=" + str(f))
             if fnmatch.fnmatch(f, "*.xml"):
@@ -369,6 +369,7 @@ class NLM_AheadOfPrint:
                     id_ = idList[0]
                     query = {"id": id_, "status": "aheadofprint"}
                     cursor = self.mid.search(query)
+                    print("cursor count=" + str(cursor.count()))
                     if cursor.count() > 0:
                         # Move xml physical file
                         filename = id_ + ".xml"
