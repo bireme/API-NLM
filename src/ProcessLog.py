@@ -127,7 +127,7 @@ class ProcessLog:
         return doc
 
 if __name__ == "__main__":
-    # Execute only if run as a script
+    # Execute only if run as a script.
 
     verbose_ = True
 
