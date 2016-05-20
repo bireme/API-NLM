@@ -344,12 +344,12 @@ class NLM_AheadOfPrint:
         """
         nowDate = datetime.now()
 
-        # Removes duplicated documents from processing directory and workDir
+        # Remove duplicated documents from processing directory and workDir
         if verbose:
             print("\nRemoving duplicated xml files: ", end="", flush=True)
         self.__changeDocStatus2(dateBegin, hourBegin, "medline*.xml", verbose)
 
-        # Copies all xml files to the oficial processing directory
+        # Copy all xml files to the oficial processing directory
         if verbose:
             print("\nMoving xml files to the processing directory: ", end="",
                   flush=True)
