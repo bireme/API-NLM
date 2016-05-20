@@ -237,7 +237,7 @@ class NLM_AheadOfPrint:
         verbose - if True prints document id into standard output
         """
         removed = 0  # Removed xml files
-        tell = 20
+        tell = 1
         cur = 0
 
         # For all documents in workDir
