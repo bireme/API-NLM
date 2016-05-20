@@ -275,7 +275,7 @@ class NLM_AheadOfPrint:
                         removed += 1
 
         if verbose:
-            print("Total: " + str(removed) + " xml files were deleted.")
+            print("\nTotal: " + str(removed) + " xml files were deleted.")
 
     def process(self,
                 dateBegin,
@@ -350,12 +350,14 @@ class NLM_AheadOfPrint:
 
         # Copies all xml files to the oficial processing directory
         if verbose:
-            print("\n\nMoving xml files to the processing directory.",
+            print("\nMoving xml files to the processing directory.",
                   flush=True)
 
         #  For all documents in download dir
         listDir = os.listdir(self.xmlOutDir)
+        print(listDir)
         for f in listDir:
+            print("f=" + str(f))
             if fnmatch.fnmatch(f, "*.xml"):
                 idList = self.__getDocIdList(join(self.xmlProcDir, f))
                 print(idList)
