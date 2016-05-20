@@ -87,7 +87,7 @@ def moveFile(fromDir,
 
     from_ = join(fromDir, fileName)
     to = join(toDir, fileName)
-    print("movendo arquivo " + from_ + " para " + to)
+
     shutil.move(from_, to)
 
 
@@ -167,7 +167,6 @@ def copyFiles(fromDir,
             from_ = join(fromDir, f)
             to = join(toDir, f)
             if isdir(from_):
-                print("diretorio:" + f)
                 if copySubDirs:
                     tot += copyFiles(from_, to, fileFilter, createToDir,
                                      copySubDirs)

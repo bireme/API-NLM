@@ -350,17 +350,18 @@ class NLM_AheadOfPrint:
 
         # Copies all xml files to the oficial processing directory
         if verbose:
-            print("\nMoving xml files to the processing directory.",
+            print("\nMoving xml files to the processing directory: ",
                   flush=True)
 
         #  For all documents in download dir
         listDir = os.listdir(self.xmlOutDir)
 
         for f in listDir:
+            if verbose:
+                print(".", end="", flush=True)
+
             if fnmatch.fnmatch(f, "*.xml"):
-                print("===>match")
-                idList = self.__getDocIdList(join(self.xmlProcDir, f))
-                print(idList)
+                idList = self.__getDocIdList(join(self.xmlOutDir, f))
                 if len(idList) == 0:
                     if verbose:
                         print("id from xml file [" + str(f) +
@@ -369,7 +370,6 @@ class NLM_AheadOfPrint:
                     id_ = idList[0]
                     query = {"id": id_, "status": "aheadofprint"}
                     cursor = self.mid.search(query)
-                    print("cursor count=" + str(cursor.count()))
                     if cursor.count() > 0:
                         # Move xml physical file
                         filename = id_ + ".xml"
@@ -390,4 +390,4 @@ class NLM_AheadOfPrint:
 
         if verbose:
             elapsedTime = datetime.now() - nowDate
-            print("\nElapsed time: " + str(elapsedTime))
+            print("\n\nElapsed time: " + str(elapsedTime))
