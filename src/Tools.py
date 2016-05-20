@@ -87,6 +87,7 @@ def moveFile(fromDir,
 
     from_ = join(fromDir, fileName)
     to = join(toDir, fileName)
+    print("movendo arquivo " + from_ + " para " + to)
     shutil.move(from_, to)
 
 

@@ -236,12 +236,15 @@ class NLM_AheadOfPrint:
         fileFilter - Unix shell-style wildcards for file filtering
         verbose - if True prints document id into standard output
         """
+        removed = 0 # Removed xml files
+
         # For all documents in workDir
         listDir = os.listdir(self.xmlProcDir)
         for f in listDir:
             # Searches if there is a mongo document with same id and
             # updates/deletes it.
             if fnmatch.fnmatch(f, fileFilter):
+                # Get the xml doc id from file
                 id_ = self.__getDocId(join(self.xmlProcDir, f))
                 if id_ is None:
                     if verbose:
@@ -270,9 +273,10 @@ class NLM_AheadOfPrint:
                         doc["process"] = self.process_
                         doc["owner"] = self.owner
                         self.mid.saveDoc(doc)    # create new id mongo doc
+                        removed += 1
 
         if verbose:
-            print("Total: " + str(len(listDir)) + " xml files were deleted.")
+            print("Total: " + str(len(removed)) + " xml files were deleted.")
 
     def process(self,
                 dateBegin,
