@@ -165,8 +165,9 @@ class NLM_AheadOfPrint:
                           hourBegin,
                           verbose=False):
         """
-        Change the document status from "aheadofprint" to "no_aheadofprint" if
-        MongoDb lastHarvesting document field is not in the ids list.
+        Change the document status from "aheadofprint/moved" to
+        "no_aheadofprint" if MongoDb lastHarvesting document field is not
+        in the ids list.
 
         ids - list of aheadofprint document ids
         dateBegin - process begin date YYYYMMDD
@@ -201,27 +202,26 @@ class NLM_AheadOfPrint:
         if verbose:
             print("Total: " + str(cursor.count()) + " xml files were deleted.")
 
-    def __getDocId(self,
-                   filePath,
-                   idXPath="MedlineCitationSet/MedlineCitation/PMID",
-                   encoding="UTF-8"):
+    def __getDocIdList(self,
+                       filePath,
+                       idXPath="MedlineCitationSet/MedlineCitation/PMID",
+                       encoding="UTF-8"):
         """
 
         filePath - the xml file path
         idXPath - the xml path to the document id
         encoding - xml file encoding
-        Returns the id tag of a xml document.
+        Returns a list of id tags of a xml document.
         """
+        ids = []
         xml = Tools.readFile(filePath, encoding=encoding)
         xpath = MyXML(xml)
         xlist = xpath.getXPath(idXPath)
 
-        if len(xlist) == 0:
-            id_ = None
-        else:
-            id_ = xlist[0][0]
+        for elem in xlist:
+            ids.append(elem[0])
 
-        return id_
+        return ids
 
     def __changeDocStatus2(self,
                            dateBegin,
@@ -237,25 +237,19 @@ class NLM_AheadOfPrint:
         verbose - if True prints document id into standard output
         """
         removed = 0  # Removed xml files
-        tell = 1
-        cur = 0
 
-        # For all documents in workDir
+        # For all documents in medline processing directory
         listDir = os.listdir(self.xmlProcDir)
         for f in listDir:
-            cur += 1
-            if cur % tell == 0:
+            if verbose:
                 print(".", end='', flush=True)
+
             # Searches if there is a mongo document with same id and
             # updates/deletes it.
             if fnmatch.fnmatch(f, fileFilter):
                 # Get the xml doc id from file
-                id_ = self.__getDocId(join(self.xmlProcDir, f))
-                if id_ is None:
-                    if verbose:
-                        print("id from xml file [" + str(f) +
-                              "] was not found.")
-                else:
+                idList = self.__getDocIdList(join(self.xmlProcDir, f))
+                for id_ in idList:
                     # If there is such document
                     query = {"_id": id_}
                     cursor = self.mdoc.search(query)
@@ -281,7 +275,7 @@ class NLM_AheadOfPrint:
                         removed += 1
 
         if verbose:
-            print("Total: " + str(len(removed)) + " xml files were deleted.")
+            print("Total: " + str(removed) + " xml files were deleted.")
 
     def process(self,
                 dateBegin,
@@ -359,16 +353,17 @@ class NLM_AheadOfPrint:
             print("\n\nMoving xml files to the processing directory.",
                   flush=True)
 
-        # For all documents in download dir
+        #  For all documents in download dir
         listDir = os.listdir(self.xmlOutDir)
         for f in listDir:
             if fnmatch.fnmatch(f, "*.xml"):
-                id_ = self.__getDocId(join(self.xmlProcDir, f))
-                if id_ is None:
+                idList = self.__getDocIdList(join(self.xmlProcDir, f))
+                if len(idList) == 0:
                     if verbose:
                         print("id from xml file [" + str(f) +
                               "] was not found.")
                 else:  # If there is such document
+                    id_ = idList[0]
                     query = {"id": id_, "status": "aheadofprint"}
                     cursor = self.mid.search(query)
                     if cursor.count() > 0:
