@@ -29,6 +29,7 @@ from os.path import join
 import xmltodict
 from NLM_API import NLM_API
 from XML import MyXML
+from RegularExpression import RegularExpression
 from DocIterator import DocIterator
 import Tools
 
@@ -55,6 +56,9 @@ class NLM_AheadOfPrint:
         self.encoding = factory.encoding
         self.process_ = factory.process
         self.owner = factory.owner
+
+        self.mid.createIndex("id", ["id"])
+        self.mid.createIndex("id_status", ["id", "status"])
 
     def __insertDocId(self,
                       docId,
@@ -211,7 +215,7 @@ class NLM_AheadOfPrint:
         filePath - the xml file path
         idXPath - the xml path to the document id
         encoding - xml file encoding
-        Returns a list of id tags of a xml document.
+        Returns a list of id tags from a xml document.
         """
         ids = []
         xml = Tools.readFile(filePath, encoding=encoding)
@@ -222,6 +226,22 @@ class NLM_AheadOfPrint:
             ids.append(elem[0])
 
         return ids
+
+    def __getDocIdList2(self,
+                        filePath,
+                        regExp,
+                        encoding="UTF-8"):
+        """
+
+        filePath - the xml file path
+        regExp - the regular expression used to extract the document id
+        encoding - xml file encoding
+        Returns a list of id tags from a xml document.
+        """
+        xml = Tools.readFile(filePath, encoding=encoding)
+        rex = RegularExpression(regExp, dotAll=True)
+
+        return rex.findAll(xml)
 
     def __changeDocStatus2(self,
                            dateBegin,
@@ -237,6 +257,7 @@ class NLM_AheadOfPrint:
         verbose - if True prints document id into standard output
         """
         removed = 0  # Removed xml files
+        rexp = r"<MedlineCitation.+?(\d+)</PMID>"
 
         # For all documents in medline processing directory
         listDir = os.listdir(self.xmlProcDir)
@@ -248,8 +269,10 @@ class NLM_AheadOfPrint:
             # updates/deletes it.
             if fnmatch.fnmatch(f, fileFilter):
                 # Get the xml doc id from file
-                idList = self.__getDocIdList(join(self.xmlProcDir, f),
-                              idXPath="MedlineCitationSet/MedlineCitation/PMID")
+                # idList = self.__getDocIdList(join(self.xmlProcDir, f),
+                #            idXPath="MedlineCitationSet/MedlineCitation/PMID")
+                idList = self.__getDocIdList2(join(self.xmlProcDir, f),
+                                              regExp=rexp)
                 for id_ in idList:
                     # If there is such document
                     query = {"_id": id_}
@@ -343,6 +366,7 @@ class NLM_AheadOfPrint:
                   output
         """
         nowDate = datetime.now()
+        rexp = r"<MedlineCitation.+?(\d+)</PMID>"
 
         # Remove duplicated documents from processing directory and workDir
         if verbose:
@@ -366,8 +390,10 @@ class NLM_AheadOfPrint:
                     print(".", end="", flush=True)
 
             if fnmatch.fnmatch(f, "*.xml"):
-                idList = self.__getDocIdList(join(self.xmlOutDir, f),
-                                   idXPath="PubmedArticle/MedlineCitation/PMID")
+                # idList = self.__getDocIdList(join(self.xml'OutDir, f),
+                #                 idXPath="PubmedArticle/MedlineCitation/PMID")
+                idList = self.__getDocIdList2(join(self.xmlProcDir, f),
+                                              regExp=rexp)
                 if len(idList) == 0:
                     if verbose:
                         print("id from xml file [" +
