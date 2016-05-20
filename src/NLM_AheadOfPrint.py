@@ -351,15 +351,19 @@ class NLM_AheadOfPrint:
 
         # Copies all xml files to the oficial processing directory
         if verbose:
-            print("\nMoving xml files to the processing directory: ",
+            print("\nMoving xml files to the processing directory: ", end="",
                   flush=True)
 
         #  For all documents in download dir
         listDir = os.listdir(self.xmlOutDir)
+        cur = 0
+        tell = 100
 
         for f in listDir:
+            cur += 1
             if verbose:
-                print(".", end="", flush=True)
+                if cur % tell == 0:
+                    print(".", end="", flush=True)
 
             if fnmatch.fnmatch(f, "*.xml"):
                 idList = self.__getDocIdList(join(self.xmlOutDir, f),
