@@ -359,6 +359,7 @@ class NLM_AheadOfPrint:
         for f in listDir:
             print("f=" + str(f))
             if fnmatch.fnmatch(f, "*.xml"):
+                print("===>match")
                 idList = self.__getDocIdList(join(self.xmlProcDir, f))
                 print(idList)
                 if len(idList) == 0:
