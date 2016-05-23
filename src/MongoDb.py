@@ -44,9 +44,14 @@ class MyMongo:
         self.client = MongoClient(host, port)
         self.db = self.client[database]
         self.col = self.db[collection]
+        self.bulk = self.col.initialize_unordered_bulk_op()
 
         self.ASCENDING = pymongo.ASCENDING
         self.DESCENDING = pymongo.DESCENDING
+
+    def bulkClean(self):
+        """Reinitalize the write bulk."""
+        self.bulk = self.col.initialize_unordered_bulk_op()
 
     def saveDoc(self, doc):
         """
@@ -55,6 +60,14 @@ class MyMongo:
         doc - mongo document represented as a dictionary
         """
         self.col.insert_one(doc)
+
+    def insertDocBulk(self, doc):
+        """
+        Insert a document into write bulk.
+
+        doc - mongo document represented as a dictionary
+        """
+        self.bulk.insert(doc)
 
     def replaceDoc(self, doc):
         """
@@ -145,3 +158,7 @@ class MyMongo:
         Returns only one document or None if no one was found
         """
         return self.col.findOne(query)
+
+    def bulkWrite(self):
+        """Write documents from write bulk."""
+        self.bulk.execute()

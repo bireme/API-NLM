@@ -106,15 +106,13 @@ class NLM_AheadOfPrint:
     def __insertDocId2(self,
                        docId,
                        dateBegin,
-                       hourBegin,
-                       bulk):
+                       hourBegin):
         """
         Insert an id document into collection "id".
 
         docId - NLM document id
         dateBegin - process begin date YYYYMMDD
         hourBegin - process begin time HH:MM:SS
-        bulk - bulk writting object
         Returns True is it a new document False is it was already saved
         """
         # Document is new if it is not in id collection or if its status is
@@ -131,7 +129,7 @@ class NLM_AheadOfPrint:
             doc["process"] = self.process_
             doc["owner"] = self.owner
             # self.mid.saveDoc(doc)  # Save document into mongo
-            bulk.insert(doc)  # Save document into mongo
+            self.mid.insertDocBulk(doc)  # Save document into mongo
         else:
             # If document is not new and its status is not ahead of print
             # status='no_aheadofprint' or status='moved',
@@ -236,15 +234,14 @@ class NLM_AheadOfPrint:
                   end='', flush=True)
 
         bulkCount = 0
-        bulk = self.mid.initialize_unordered_bulk_op()
 
         for id_ in ids:
             # Insert id document into collection "id"
-            isNewDoc = self.__insertDocId2(id_, dateBegin, hourBegin, bulk)
+            isNewDoc = self.__insertDocId2(id_, dateBegin, hourBegin)
             bulkCount += 1
             if bulkCount % 100 == 0:
-                bulk.execute()
-                bulk = self.mid.initialize_unordered_bulk_op()
+                self.mid.bulkWrite()
+                self.mid.bulkClean()
 
             if isNewDoc:
                 newDocs.append(id_)
