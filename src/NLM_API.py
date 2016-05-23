@@ -84,7 +84,7 @@ class NLM_API:
         numOfDocs = int(idTuple[0])
 
         idList = []
-        max_ = 1000
+        max_ = 10000
         startPos = 0
 
         while startPos < numOfDocs:
