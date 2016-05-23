@@ -234,7 +234,6 @@ class NLM_AheadOfPrint:
                   end='', flush=True)
 
         bulkCount = 0
-
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId2(id_, dateBegin, hourBegin)
@@ -256,6 +255,7 @@ class NLM_AheadOfPrint:
                       " documents: ", end='', flush=True)
             diter = DocIterator(newDocs, verbose=verbose)
 
+            bulkCount = 0
             for dId in diter:
                 docId = dId[0]
                 xml = dId[1]
@@ -264,13 +264,22 @@ class NLM_AheadOfPrint:
                 Tools.xmlToFile(docId, xml, xdir, encoding)  # save into file
                 docDict = xmltodict.parse(xml)
                 doc = {"_id": docId, "doc": docDict}
-                self.mdoc.saveDoc(doc)  # save into mongo 'doc' collection
+                # self.mdoc.saveDoc(doc)  # save into mongo 'doc' collection
+                self.mdoc.insertDocBulk(doc)  # save into mongo 'doc' coll
 
                 # Change document document status from 'in process' to
                 # 'aheadofprint' in id collection.
                 doc = self.mid.search({"id": docId})[0]
                 doc["status"] = "aheadofprint"
-                self.mid.replaceDoc(doc)   # save into mongo 'id' collection
+                # self.mid.replaceDoc(doc)   # save into mongo 'id' collection
+                self.mid.insertDocBulk(doc)  # save into mongo 'doc' collection
+
+                bulkCount += 1
+                if bulkCount % 100 == 0:
+                    self.mid.bulkWrite()
+                    self.mid.bulkClean()
+                    self.mdoc.bulkWrite()
+                    self.mdoc.bulkClean()
 
             if verbose:
                 print()  # to print a new line
