@@ -256,6 +256,7 @@ class NLM_AheadOfPrint:
             diter = DocIterator(newDocs, verbose=verbose)
 
             bulkCount = 0
+            self.mid.bulkClean()
             for dId in diter:
                 docId = dId[0]
                 xml = dId[1]
