@@ -86,7 +86,7 @@ class MyMongo:
         query - doc dictionary to find the document
         update - doc dictionary of the update part of document
         """
-        self.bulk.find(query).update_one(update)
+        self.bulk.find(query).updateOne({"$set": update})
 
     def loadDoc(self, id_):
         """
