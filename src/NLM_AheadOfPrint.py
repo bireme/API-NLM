@@ -276,7 +276,7 @@ class NLM_AheadOfPrint:
                                        {"status": "aheadofprint"})
 
                 bulkCount += 1
-                if bulkCount % 10 == 0:
+                if bulkCount % 100 == 0:
                     try:
                         self.mid.bulkWrite()
                         self.mid.bulkClean()
