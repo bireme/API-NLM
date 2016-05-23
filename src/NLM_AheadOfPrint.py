@@ -131,7 +131,7 @@ class NLM_AheadOfPrint:
             doc["process"] = self.process_
             doc["owner"] = self.owner
             # self.mid.saveDoc(doc)  # Save document into mongo
-            self.mid.insertDocBulk(doc)  # Save document into mongo
+            self.mid.bulkInsertDoc(doc)  # Save document into mongo
         else:
             # If document is not new and its status is not ahead of print
             # status='no_aheadofprint' or status='moved',
@@ -268,14 +268,12 @@ class NLM_AheadOfPrint:
                 docDict = xmltodict.parse(xml)
                 doc = {"_id": docId, "doc": docDict}
                 # self.mdoc.saveDoc(doc)  # save into mongo 'doc' collection
-                self.mdoc.insertDocBulk(doc)  # save into mongo 'doc' coll
+                self.mdoc.bulkInsertDoc(doc)  # save into mongo 'doc' coll
 
                 # Change document document status from 'in process' to
                 # 'aheadofprint' in id collection.
-                doc = self.mid.search({"id": docId})[0]
-                doc["status"] = "aheadofprint"
-                # self.mid.replaceDoc(doc)   # save into mongo 'id' collection
-                self.mid.insertDocBulk(doc)  # save into mongo 'doc' collection
+                self.mid.bulkUpdateDoc({"id": docId},
+                                       {"status": "aheadofprint"})
 
                 bulkCount += 1
                 if bulkCount % 10 == 0:

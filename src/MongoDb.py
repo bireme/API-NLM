@@ -61,7 +61,7 @@ class MyMongo:
         """
         self.col.insert_one(doc)
 
-    def insertDocBulk(self, doc):
+    def bulkInsertDoc(self, doc):
         """
         Insert a document into write bulk.
 
@@ -77,6 +77,16 @@ class MyMongo:
         """
         _id = {'_id': doc['_id']}
         self.col.replace_one(_id, doc, upsert=True)
+
+    def bulkUpdateDoc(self,
+                      query,
+                      update):
+        """
+        Find a document and update it.
+        query - doc dictionary to find the document
+        update - doc dictionary of the update part of document
+        """
+        self.col.bulk.find(query).replace_one(update)
 
     def loadDoc(self, id_):
         """
