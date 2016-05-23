@@ -103,6 +103,52 @@ class NLM_AheadOfPrint:
 
         return isNew
 
+    def __insertDocId2(self,
+                       docId,
+                       dateBegin,
+                       hourBegin,
+                       bulk):
+        """
+        Insert an id document into collection "id".
+
+        docId - NLM document id
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        bulk - bulk writting object
+        Returns True is it a new document False is it was already saved
+        """
+        # Document is new if it is not in id collection or if its status is
+        # 'in process' meaning that a previous download was unfinished.
+        query = {"id": docId, "status": {"$ne": "in process"}}
+        cursor = self.mid.search(query)
+        isNew = (cursor.count() == 0)
+
+        if isNew:
+            doc = {"id": docId}
+            doc["date"] = dateBegin
+            doc["hour"] = hourBegin
+            doc["status"] = "in process"
+            doc["process"] = self.process_
+            doc["owner"] = self.owner
+            # self.mid.saveDoc(doc)  # Save document into mongo
+            bulk.insert(doc)  # Save document into mongo
+        else:
+            # If document is not new and its status is not ahead of print
+            # status='no_aheadofprint' or status='moved',
+            # delete the physical file and from doc collection.
+            oldDoc = cursor[0]
+            if oldDoc["status"] != 'aheadofprint':
+                fpath = join(self.xmlOutDir, docId + ".xml")
+                if Tools.existFile(fpath):
+                    try:
+                        Tools.removeFile(fpath)
+                    except OSError:
+                        raise Exception("Document id:" + str(docId) +
+                                        " deletion failed")
+                self.mdoc.deleteDoc(docId)
+
+        return isNew
+
     def __insertDocs(self,
                      ids,
                      dateBegin,
@@ -131,6 +177,75 @@ class NLM_AheadOfPrint:
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId(id_, dateBegin, hourBegin)
+            if isNewDoc:
+                newDocs.append(id_)
+            if verbose:
+                ch = '+' if isNewDoc else '.'
+                print(ch, end='', flush=True)
+
+        newDocLen = len(newDocs)
+        if newDocLen > 0:
+            if verbose:
+                print("\nDownloading and saving " + str(newDocLen) +
+                      " documents: ", end='', flush=True)
+            diter = DocIterator(newDocs, verbose=verbose)
+
+            for dId in diter:
+                docId = dId[0]
+                xml = dId[1]
+
+                # Save xml content into mongo and file
+                Tools.xmlToFile(docId, xml, xdir, encoding)  # save into file
+                docDict = xmltodict.parse(xml)
+                doc = {"_id": docId, "doc": docDict}
+                self.mdoc.saveDoc(doc)  # save into mongo 'doc' collection
+
+                # Change document document status from 'in process' to
+                # 'aheadofprint' in id collection.
+                doc = self.mid.search({"id": docId})[0]
+                doc["status"] = "aheadofprint"
+                self.mid.replaceDoc(doc)   # save into mongo 'id' collection
+
+            if verbose:
+                print()  # to print a new line
+
+    def __insertDocs2(self,
+                      ids,
+                      dateBegin,
+                      hourBegin,
+                      xdir=".",
+                      encoding="UTF-8",
+                      verbose=False):
+        """
+        For each id from a list of ids, adds a new id document into mongo id
+        collection, add a new document into mongo xml collection and creates a
+        new file with xml content.
+
+        ids - a list of NLM document ids
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        xdir - output file directory
+        encoding - output file encoding
+        verbose - if True prints the document is inserted
+        """
+        newDocs = []
+        id_size = len(ids)
+        # print("dateBegin=" + dateBegin)
+        if verbose:
+            print("Checking " + str(id_size) + " documents: ",
+                  end='', flush=True)
+
+        bulkCount = 0
+        bulk = self.mid.initialize_unordered_bulk_op()
+
+        for id_ in ids:
+            # Insert id document into collection "id"
+            isNewDoc = self.__insertDocId2(id_, dateBegin, hourBegin, bulk)
+            bulkCount += 1
+            if bulkCount % 100 == 0:
+                bulk.execute()
+                bulk = self.mid.initialize_unordered_bulk_op()
+
             if isNewDoc:
                 newDocs.append(id_)
             if verbose:
@@ -342,9 +457,9 @@ class NLM_AheadOfPrint:
                 print("\n" + str(from_+1) + "/" + str(numOfDocs))
 
             to = from_ + loop
-            self.__insertDocs(idList[from_:to],
-                              dateBegin, hourBegin,
-                              self.xmlOutDir, self.encoding, verbose)
+            self.__insertDocs2(idList[from_:to],
+                               dateBegin, hourBegin,
+                               self.xmlOutDir, self.encoding, verbose)
             from_ += loop
 
         if verbose:

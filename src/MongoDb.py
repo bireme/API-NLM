@@ -135,3 +135,13 @@ class MyMongo:
         Returns an iterable of documents
         """
         return self.col.find(query, retFldNames)
+
+    def searchOne(self,
+                  query={}):
+        """
+        Search documents.
+
+        query - map with field/value elements
+        Returns only one document or None if no one was found
+        """
+        return self.col.findOne(query)
