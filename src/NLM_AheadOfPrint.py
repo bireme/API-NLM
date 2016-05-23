@@ -26,6 +26,8 @@ from datetime import datetime
 import fnmatch
 import os
 from os.path import join
+from pprint import pprint
+from pymongo.errors import BulkWriteError
 import xmltodict
 from NLM_API import NLM_API
 from XML import MyXML
@@ -277,10 +279,13 @@ class NLM_AheadOfPrint:
 
                 bulkCount += 1
                 if bulkCount % 10 == 0:
-                    self.mid.bulkWrite()
-                    self.mid.bulkClean()
-                    self.mdoc.bulkWrite()
-                    self.mdoc.bulkClean()
+                    try:
+                        self.mid.bulkWrite()
+                        self.mid.bulkClean()
+                        self.mdoc.bulkWrite()
+                        self.mdoc.bulkClean()
+                    except BulkWriteError as bwe:
+                        pprint(bwe.details)
 
             if verbose:
                 print()  # to print a new line
