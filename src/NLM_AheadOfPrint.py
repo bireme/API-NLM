@@ -275,7 +275,7 @@ class NLM_AheadOfPrint:
                 self.mid.insertDocBulk(doc)  # save into mongo 'doc' collection
 
                 bulkCount += 1
-                if bulkCount % 100 == 0:
+                if bulkCount % 10 == 0:
                     self.mid.bulkWrite()
                     self.mid.bulkClean()
                     self.mdoc.bulkWrite()
