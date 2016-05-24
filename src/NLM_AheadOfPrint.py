@@ -284,6 +284,7 @@ class NLM_AheadOfPrint:
                         self.mdoc.bulkClean()
                     except BulkWriteError as bwe:
                         pprint(bwe.details)
+                        raise Exception("Bulk write error")
 
             if verbose:
                 print()  # to print a new line
@@ -315,7 +316,7 @@ class NLM_AheadOfPrint:
             try:
                 Tools.removeFile(fpath)
             except OSError:
-                pass
+                raise Exception("Remove file [" + str(fpath) + "] error")
 
             # Deletes document from 'doc' collection
             self.mdoc.deleteDoc(id_)
@@ -408,7 +409,8 @@ class NLM_AheadOfPrint:
                         try:
                             os.remove(filename)
                         except OSError:
-                            pass
+                            raise Exception("Remove file [" + filename +
+                                            "] error")
 
                         # Delete document from mongo doc collection
                         self.mdoc.deleteDoc(id_)
@@ -535,7 +537,9 @@ class NLM_AheadOfPrint:
                             Tools.moveFile(self.xmlOutDir, self.xmlProcDir,
                                            filename, createToDir=False)
                         except OSError:
-                            pass
+                            raise Exception("Move file:" + filename +
+                                            "from:" + self.xmlOutDir +
+                                            "to:" + self.xmlProcDir + " error")
 
                         # Update document status from mongo id collection
                         doc = {"id": id_}
