@@ -130,17 +130,14 @@ class NLM_AheadOfPrint:
                   end='', flush=True)
 
         bulkCount = 0
-        allWritten = True
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId(id_, dateBegin, hourBegin)
-            allWritten = False
             bulkCount += 1
 
             if bulkCount % 100 == 0:
                 self.mid.bulkWrite()
                 self.mid.bulkClean()
-                allWritten = True
 
             if isNewDoc:
                 newDocs.append(id_)
@@ -148,8 +145,8 @@ class NLM_AheadOfPrint:
                 ch = '+' if isNewDoc else '.'
                 print(ch, end='', flush=True)
 
-        if not allWritten:
-            self.mid.bulkWrite()
+        # Write remaining
+        self.mid.bulkWrite()
 
         newDocLen = len(newDocs)
         if newDocLen > 0:
@@ -159,7 +156,6 @@ class NLM_AheadOfPrint:
             diter = DocIterator(newDocs, verbose=verbose)
 
             bulkCount = 0
-            allWritten = True
             self.mid.bulkClean()
 
             for dId in diter:
@@ -177,7 +173,6 @@ class NLM_AheadOfPrint:
                 # 'aheadofprint' in id collection.
                 self.mid.bulkUpdateDoc({"id": docId},
                                        {"status": "aheadofprint"})
-                allWritten = False
 
                 bulkCount += 1
                 if bulkCount % 100 == 0:
@@ -185,11 +180,10 @@ class NLM_AheadOfPrint:
                     self.mid.bulkClean()
                     self.mdoc.bulkWrite()
                     self.mdoc.bulkClean()
-                    allWritten = True
 
-            if not allWritten:
-                self.mid.bulkWrite()
-                self.mdoc.bulkWrite()
+            # Write remaining
+            self.mid.bulkWrite()
+            self.mdoc.bulkWrite()
 
             if verbose:
                 print()  # to print a new line
@@ -310,6 +304,53 @@ class NLM_AheadOfPrint:
         if verbose:
             print("\nTotal: " + str(removed) + " xml files were deleted.")
 
+    def __changeDocStatus3(self,
+                           dateBegin,
+                           hourBegin,
+                           idFile,
+                           verbose=False):
+        """
+        Change the document status from "aheadofprint" to "no_aheadofprint" if
+        the xml document id is also present in 'workDir'
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        idFile - file with all ids of processing xml documents
+                 (one id per line)
+        verbose - if True prints document id into standard output
+        """
+        removed = 0  # Removed xml files
+
+        idList = Tools.readLine2(idFile)
+        for id_ in idList:
+            id_ = id_.strip()
+            if len(id_ > 0):
+                # If there is such document
+                query = {"_id": id_}
+                cursor = self.mdoc.search(query)
+                if cursor.count() > 0:
+                    # Delete xml physical file
+                    filename = join(self.xmlOutDir, id_ + ".xml")
+                    try:
+                        os.remove(filename)
+                    except OSError:
+                        raise Exception("Remove file [" + filename +
+                                        "] error")
+
+                    # Delete document from mongo doc collection
+                    self.mdoc.deleteDoc(id_)
+
+                    # Update document status from mongo id collection
+                    doc = {"id": id_}
+                    doc["date"] = dateBegin
+                    doc["hour"] = hourBegin
+                    doc["status"] = "no_aheadofprint"
+                    doc["process"] = self.process_
+                    doc["owner"] = self.owner
+                    self.mid.saveDoc(doc)    # create new id mongo doc
+                    removed += 1
+        if verbose:
+            print("\nTotal: " + str(removed) + " xml files were deleted.")
+
     def process(self,
                 dateBegin,
                 hourBegin,
@@ -387,7 +428,6 @@ class NLM_AheadOfPrint:
                   flush=True)
 
         bulkCount = 0
-        allWritten = True
 
         query = {"status": "aheadofprint"}
         cursor = self.mid.search(query)
@@ -407,16 +447,14 @@ class NLM_AheadOfPrint:
             # 'moved' in id collection.
             self.mid.bulkUpdateDoc({"id": id_},
                                    {"status": "moved"})
-            allWritten = False
 
             bulkCount += 1
             if bulkCount % 100 == 0:
                 self.mid.bulkWrite()
                 self.mid.bulkClean()
-                allWritten = True
 
-        if not allWritten:
-            self.mid.bulkWrite()
+        # Write remaining
+        self.mid.bulkWrite()
 
         if verbose:
             elapsedTime = datetime.now() - nowDate

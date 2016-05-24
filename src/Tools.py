@@ -191,6 +191,23 @@ def readFile(filePath,
     return str_
 
 
+def readFile2(filePath,
+              encoding="UTF-8"):
+    """
+
+    filePath - the path (dir+name) of the file
+    encoding - character encoding of the file
+    Returns a list of file lines
+    """
+    lines = []
+    f = open(filePath, encoding=encoding)
+    for line in f:
+        lines.append(line)
+    f.close()
+
+    return lines
+
+
 def removeFile(filePath):
     """
     Delete a file.
