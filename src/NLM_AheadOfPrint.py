@@ -26,11 +26,8 @@ from datetime import datetime
 import fnmatch
 import os
 from os.path import join
-from pprint import pprint
-from pymongo.errors import BulkWriteError
 import xmltodict
 from NLM_API import NLM_API
-from XML import MyXML
 from RegularExpression import RegularExpression
 from DocIterator import DocIterator
 import Tools
@@ -66,49 +63,6 @@ class NLM_AheadOfPrint:
                       docId,
                       dateBegin,
                       hourBegin):
-        """
-        Insert an id document into collection "id".
-
-        docId - NLM document id
-        dateBegin - process begin date YYYYMMDD
-        hourBegin - process begin time HH:MM:SS
-        Returns True is it a new document False is it was already saved
-        """
-        # Document is new if it is not in id collection or if its status is
-        # 'in process' meaning that a previous download was unfinished.
-        query = {"id": docId, "status": {"$ne": "in process"}}
-        cursor = self.mid.search(query)
-        isNew = (cursor.count() == 0)
-
-        if isNew:
-            doc = {"id": docId}
-            doc["date"] = dateBegin
-            doc["hour"] = hourBegin
-            doc["status"] = "in process"
-            doc["process"] = self.process_
-            doc["owner"] = self.owner
-            self.mid.saveDoc(doc)  # Save document into mongo
-        else:
-            # If document is not new and its status is not ahead of print
-            # status='no_aheadofprint' or status='moved',
-            # delete the physical file and from doc collection.
-            oldDoc = cursor[0]
-            if oldDoc["status"] != 'aheadofprint':
-                fpath = join(self.xmlOutDir, docId + ".xml")
-                if Tools.existFile(fpath):
-                    try:
-                        Tools.removeFile(fpath)
-                    except OSError:
-                        raise Exception("Document id:" + str(docId) +
-                                        " deletion failed")
-                self.mdoc.deleteDoc(docId)
-
-        return isNew
-
-    def __insertDocId2(self,
-                       docId,
-                       dateBegin,
-                       hourBegin):
         """
         Insert an id document into collection "id".
 
@@ -174,81 +128,28 @@ class NLM_AheadOfPrint:
         if verbose:
             print("Checking " + str(id_size) + " documents: ",
                   end='', flush=True)
+
+        bulkCount = 0
+        allWritten = True
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId(id_, dateBegin, hourBegin)
-            if isNewDoc:
-                newDocs.append(id_)
-            if verbose:
-                ch = '+' if isNewDoc else '.'
-                print(ch, end='', flush=True)
-
-        newDocLen = len(newDocs)
-        if newDocLen > 0:
-            if verbose:
-                print("\nDownloading and saving " + str(newDocLen) +
-                      " documents: ", end='', flush=True)
-            diter = DocIterator(newDocs, verbose=verbose)
-
-            for dId in diter:
-                docId = dId[0]
-                xml = dId[1]
-
-                # Save xml content into mongo and file
-                Tools.xmlToFile(docId, xml, xdir, encoding)  # save into file
-                docDict = xmltodict.parse(xml)
-                doc = {"_id": docId, "doc": docDict}
-                self.mdoc.saveDoc(doc)  # save into mongo 'doc' collection
-
-                # Change document document status from 'in process' to
-                # 'aheadofprint' in id collection.
-                doc = self.mid.search({"id": docId})[0]
-                doc["status"] = "aheadofprint"
-                self.mid.replaceDoc(doc)   # save into mongo 'id' collection
-
-            if verbose:
-                print()  # to print a new line
-
-    def __insertDocs2(self,
-                      ids,
-                      dateBegin,
-                      hourBegin,
-                      xdir=".",
-                      encoding="UTF-8",
-                      verbose=False):
-        """
-        For each id from a list of ids, adds a new id document into mongo id
-        collection, add a new document into mongo xml collection and creates a
-        new file with xml content.
-
-        ids - a list of NLM document ids
-        dateBegin - process begin date YYYYMMDD
-        hourBegin - process begin time HH:MM:SS
-        xdir - output file directory
-        encoding - output file encoding
-        verbose - if True prints the document is inserted
-        """
-        newDocs = []
-        id_size = len(ids)
-        # print("dateBegin=" + dateBegin)
-        if verbose:
-            print("Checking " + str(id_size) + " documents: ",
-                  end='', flush=True)
-
-        bulkCount = 0
-        for id_ in ids:
-            # Insert id document into collection "id"
-            isNewDoc = self.__insertDocId2(id_, dateBegin, hourBegin)
+            allWritten = False
             bulkCount += 1
+
             if bulkCount % 100 == 0:
                 self.mid.bulkWrite()
                 self.mid.bulkClean()
+                allWritten = True
 
             if isNewDoc:
                 newDocs.append(id_)
             if verbose:
                 ch = '+' if isNewDoc else '.'
                 print(ch, end='', flush=True)
+
+        if not allWritten:
+            self.mid.bulkWrite()
 
         newDocLen = len(newDocs)
         if newDocLen > 0:
@@ -258,7 +159,9 @@ class NLM_AheadOfPrint:
             diter = DocIterator(newDocs, verbose=verbose)
 
             bulkCount = 0
+            allWritten = True
             self.mid.bulkClean()
+
             for dId in diter:
                 docId = dId[0]
                 xml = dId[1]
@@ -274,17 +177,19 @@ class NLM_AheadOfPrint:
                 # 'aheadofprint' in id collection.
                 self.mid.bulkUpdateDoc({"id": docId},
                                        {"status": "aheadofprint"})
+                allWritten = False
 
                 bulkCount += 1
                 if bulkCount % 100 == 0:
-                    try:
-                        self.mid.bulkWrite()
-                        self.mid.bulkClean()
-                        self.mdoc.bulkWrite()
-                        self.mdoc.bulkClean()
-                    except BulkWriteError as bwe:
-                        pprint(bwe.details)
-                        raise Exception("Bulk write error")
+                    self.mid.bulkWrite()
+                    self.mid.bulkClean()
+                    self.mdoc.bulkWrite()
+                    self.mdoc.bulkClean()
+                    allWritten = True
+
+            if not allWritten:
+                self.mid.bulkWrite()
+                self.mdoc.bulkWrite()
 
             if verbose:
                 print()  # to print a new line
@@ -334,29 +239,8 @@ class NLM_AheadOfPrint:
 
     def __getDocIdList(self,
                        filePath,
-                       idXPath,
+                       regExp,
                        encoding="UTF-8"):
-        """
-
-        filePath - the xml file path
-        idXPath - the xml path to the document id
-        encoding - xml file encoding
-        Returns a list of id tags from a xml document.
-        """
-        ids = []
-        xml = Tools.readFile(filePath, encoding=encoding)
-        xpath = MyXML(xml)
-        xlist = xpath.getXPath(idXPath)
-
-        for elem in xlist:
-            ids.append(elem[0])
-
-        return ids
-
-    def __getDocIdList2(self,
-                        filePath,
-                        regExp,
-                        encoding="UTF-8"):
         """
 
         filePath - the xml file path
@@ -395,10 +279,8 @@ class NLM_AheadOfPrint:
             # updates/deletes it.
             if fnmatch.fnmatch(f, fileFilter):
                 # Get the xml doc id from file
-                # idList = self.__getDocIdList(join(self.xmlProcDir, f),
-                #            idXPath="MedlineCitationSet/MedlineCitation/PMID")
-                idList = self.__getDocIdList2(join(self.xmlProcDir, f),
-                                              regExp=rexp)
+                idList = self.__getDocIdList(join(self.xmlProcDir, f),
+                                             regExp=rexp)
                 for id_ in idList:
                     # If there is such document
                     query = {"_id": id_}
@@ -469,9 +351,9 @@ class NLM_AheadOfPrint:
                 print("\n" + str(from_+1) + "/" + str(numOfDocs))
 
             to = from_ + loop
-            self.__insertDocs2(idList[from_:to],
-                               dateBegin, hourBegin,
-                               self.xmlOutDir, self.encoding, verbose)
+            self.__insertDocs(idList[from_:to],
+                              dateBegin, hourBegin,
+                              self.xmlOutDir, self.encoding, verbose)
             from_ += loop
 
         if verbose:
@@ -493,7 +375,6 @@ class NLM_AheadOfPrint:
                   output
         """
         nowDate = datetime.now()
-        rexp = r"<MedlineCitation.+?(\d+)</PMID>"
 
         # Remove duplicated documents from processing directory and workDir
         if verbose:
@@ -505,50 +386,37 @@ class NLM_AheadOfPrint:
             print("\nMoving xml files to the processing directory: ", end="",
                   flush=True)
 
-        #  For all documents in download dir
-        listDir = os.listdir(self.xmlOutDir)
-        cur = 0
-        tell = 100
+        bulkCount = 0
+        allWritten = True
 
-        for f in listDir:
-            cur += 1
-            if verbose:
-                if cur % tell == 0:
-                    print(".", end="", flush=True)
+        query = {"status": "aheadofprint"}
+        cursor = self.mid.search(query)
+        for doc in cursor:
+            id_ = doc["id"]
+            # Move xml physical file
+            filename = id_ + ".xml"
+            try:
+                Tools.moveFile(self.xmlOutDir, self.xmlProcDir,
+                               filename, createToDir=False)
+            except OSError:
+                raise Exception("Move file:" + filename +
+                                "from:" + self.xmlOutDir +
+                                "to:" + self.xmlProcDir + " error")
 
-            if fnmatch.fnmatch(f, "*.xml"):
-                # idList = self.__getDocIdList(join(self.xml'OutDir, f),
-                #                 idXPath="PubmedArticle/MedlineCitation/PMID")
-                idList = self.__getDocIdList2(join(self.xmlOutDir, f),
-                                              regExp=rexp)
-                if len(idList) == 0:
-                    if verbose:
-                        print("id from xml file [" +
-                              str(join(self.xmlOutDir, f)) +
-                              "] was not found.")
-                else:  # If there is such document
-                    id_ = idList[0]
-                    query = {"id": id_, "status": "aheadofprint"}
-                    cursor = self.mid.search(query)
-                    if cursor.count() > 0:
-                        # Move xml physical file
-                        filename = id_ + ".xml"
-                        try:
-                            Tools.moveFile(self.xmlOutDir, self.xmlProcDir,
-                                           filename, createToDir=False)
-                        except OSError:
-                            raise Exception("Move file:" + filename +
-                                            "from:" + self.xmlOutDir +
-                                            "to:" + self.xmlProcDir + " error")
+            # Change document document status from 'aheadofprint' to
+            # 'moved' in id collection.
+            self.mid.bulkUpdateDoc({"id": id_},
+                                   {"status": "moved"})
+            allWritten = False
 
-                        # Update document status from mongo id collection
-                        doc = {"id": id_}
-                        doc["date"] = dateBegin
-                        doc["hour"] = hourBegin
-                        doc["status"] = "moved"
-                        doc["process"] = self.process_
-                        doc["owner"] = self.owner
-                        self.mid.saveDoc(doc)    # create new id mongo doc
+            bulkCount += 1
+            if bulkCount % 100 == 0:
+                self.mid.bulkWrite()
+                self.mid.bulkClean()
+                allWritten = True
+
+        if not allWritten:
+            self.mid.bulkWrite()
 
         if verbose:
             elapsedTime = datetime.now() - nowDate
