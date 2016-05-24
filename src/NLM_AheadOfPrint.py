@@ -481,7 +481,7 @@ class NLM_AheadOfPrint:
                     hourBegin,
                     verbose=True):
         """
-        Remove from processing directory all documents which are also in the
+        Remove from download directory all documents which are also in the
         xmlProcDir. After that, moves all documents from download directory
         into xmlProcDir.
 
@@ -517,7 +517,7 @@ class NLM_AheadOfPrint:
             if fnmatch.fnmatch(f, "*.xml"):
                 # idList = self.__getDocIdList(join(self.xml'OutDir, f),
                 #                 idXPath="PubmedArticle/MedlineCitation/PMID")
-                idList = self.__getDocIdList2(join(self.xmlProcDir, f),
+                idList = self.__getDocIdList2(join(self.xmlOutDir, f),
                                               regExp=rexp)
                 if len(idList) == 0:
                     if verbose:
