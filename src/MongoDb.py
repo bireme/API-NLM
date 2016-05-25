@@ -171,5 +171,4 @@ class MyMongo:
 
     def bulkWrite(self):
         """Write documents from write bulk."""
-        if self.bulk.ops:
-            self.bulk.execute()
+        self.bulk.execute()

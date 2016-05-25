@@ -130,23 +130,28 @@ class NLM_AheadOfPrint:
                   end='', flush=True)
 
         bulkCount = 0
+        bulkRemaining = false
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId(id_, dateBegin, hourBegin)
-            bulkCount += 1
+            if isNewDoc:
+                newDocs.append(id_)
+                bulkCount += 1
+                bulkRemaining = True
 
             if bulkCount % 100 == 0:
                 self.mid.bulkWrite()
                 self.mid.bulkClean()
+                bulkRemaining = False
 
-            if isNewDoc:
-                newDocs.append(id_)
             if verbose:
                 ch = '+' if isNewDoc else '.'
                 print(ch, end='', flush=True)
 
         # Write remaining
-        self.mid.bulkWrite()
+        if bulkRemaining:
+            self.mid.bulkWrite()
+            bulkRemaining = False
 
         newDocLen = len(newDocs)
         if newDocLen > 0:
@@ -174,16 +179,19 @@ class NLM_AheadOfPrint:
                 self.mid.bulkUpdateDoc({"id": docId},
                                        {"status": "aheadofprint"})
 
+                bulkRemaining = True
                 bulkCount += 1
                 if bulkCount % 100 == 0:
                     self.mid.bulkWrite()
                     self.mid.bulkClean()
                     self.mdoc.bulkWrite()
                     self.mdoc.bulkClean()
+                    bulkRemaining = False
 
             # Write remaining
-            self.mid.bulkWrite()
-            self.mdoc.bulkWrite()
+            if bulkRemaining:
+                self.mid.bulkWrite()
+                self.mdoc.bulkWrite()
 
             if verbose:
                 print()  # to print a new line
@@ -428,6 +436,7 @@ class NLM_AheadOfPrint:
                   flush=True)
 
         bulkCount = 0
+        bulkRemaining = False
 
         query = {"status": "aheadofprint"}
         cursor = self.mid.search(query)
@@ -447,14 +456,16 @@ class NLM_AheadOfPrint:
             # 'moved' in id collection.
             self.mid.bulkUpdateDoc({"id": id_},
                                    {"status": "moved"})
-
+            bulkRemaining = True
             bulkCount += 1
             if bulkCount % 100 == 0:
                 self.mid.bulkWrite()
                 self.mid.bulkClean()
+                bulkRemaining = False
 
         # Write remaining
-        self.mid.bulkWrite()
+        if bulkRemaining:
+            self.mid.bulkWrite()
 
         if verbose:
             elapsedTime = datetime.now() - nowDate
