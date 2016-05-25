@@ -130,7 +130,7 @@ class NLM_AheadOfPrint:
                   end='', flush=True)
 
         bulkCount = 0
-        bulkRemaining = false
+        bulkRemaining = False
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId(id_, dateBegin, hourBegin)
