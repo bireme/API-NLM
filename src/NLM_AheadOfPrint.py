@@ -141,7 +141,6 @@ class NLM_AheadOfPrint:
 
             if bulkCount % 100 == 0:
                 self.mid.bulkWrite()
-                self.mid.bulkClean()
                 bulkRemaining = False
 
             if verbose:
@@ -161,7 +160,6 @@ class NLM_AheadOfPrint:
             diter = DocIterator(newDocs, verbose=verbose)
 
             bulkCount = 0
-            self.mid.bulkClean()
 
             for dId in diter:
                 docId = dId[0]
@@ -183,9 +181,7 @@ class NLM_AheadOfPrint:
                 bulkCount += 1
                 if bulkCount % 100 == 0:
                     self.mid.bulkWrite()
-                    self.mid.bulkClean()
                     self.mdoc.bulkWrite()
-                    self.mdoc.bulkClean()
                     bulkRemaining = False
 
             # Write remaining
@@ -449,8 +445,8 @@ class NLM_AheadOfPrint:
                                filename, createToDir=False)
             except OSError:
                 raise Exception("Move file:" + filename +
-                                "from:" + self.xmlOutDir +
-                                "to:" + self.xmlProcDir + " error")
+                                " from:" + self.xmlOutDir +
+                                " to:" + self.xmlProcDir + " error")
 
             # Change document document status from 'aheadofprint' to
             # 'moved' in id collection.
@@ -460,7 +456,6 @@ class NLM_AheadOfPrint:
             bulkCount += 1
             if bulkCount % 100 == 0:
                 self.mid.bulkWrite()
-                self.mid.bulkClean()
                 bulkRemaining = False
 
         # Write remaining

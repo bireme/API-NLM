@@ -172,3 +172,4 @@ class MyMongo:
     def bulkWrite(self):
         """Write documents from write bulk."""
         self.bulk.execute()
+        self.bulkClean()
