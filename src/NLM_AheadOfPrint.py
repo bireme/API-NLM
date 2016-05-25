@@ -140,7 +140,9 @@ class NLM_AheadOfPrint:
                 bulkRemaining = True
 
             if bulkCount % 100 == 0:
+                print("aqui 1")
                 self.mid.bulkWrite()
+                print("aqui 1a")
                 bulkRemaining = False
 
             if verbose:
@@ -149,7 +151,9 @@ class NLM_AheadOfPrint:
 
         # Write remaining
         if bulkRemaining:
+            print("aqui 2")
             self.mid.bulkWrite()
+            print("aqui 2a")
             bulkRemaining = False
 
         newDocLen = len(newDocs)
@@ -180,14 +184,18 @@ class NLM_AheadOfPrint:
                 bulkRemaining = True
                 bulkCount += 1
                 if bulkCount % 100 == 0:
+                    print("aqui 3")
                     self.mid.bulkWrite()
                     self.mdoc.bulkWrite()
+                    print("aqui 3a")
                     bulkRemaining = False
 
             # Write remaining
             if bulkRemaining:
+                print("aqui 4")
                 self.mid.bulkWrite()
                 self.mdoc.bulkWrite()
+                print("aqui 4a")
 
             if verbose:
                 print()  # to print a new line
