@@ -198,7 +198,7 @@ class NLM_AheadOfPrint:
                           hourBegin,
                           verbose=False):
         """
-        Change the document status from "aheadofprint/moved" to
+        Change the document status from "aheadofprint" to
         "no_aheadofprint" if MongoDb lastHarvesting document field is not
         in the ids list.
 
@@ -451,7 +451,9 @@ class NLM_AheadOfPrint:
             # Change document document status from 'aheadofprint' to
             # 'moved' in id collection.
             self.mid.bulkUpdateDoc({"id": id_},
-                                   {"status": "moved"})
+                                   {"status": "moved",
+                                    "date": dateBegin,
+                                    "hour": hourBegin})
             bulkRemaining = True
             bulkCount += 1
             if bulkCount % 100 == 0:
