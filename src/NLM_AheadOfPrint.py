@@ -439,7 +439,7 @@ class NLM_AheadOfPrint:
             # Move xml physical file
             filename = id_ + ".xml"
             try:
-                Tools.moveFile(self.xmlOutDir, se elf.xmlProcDir,
+                Tools.moveFile(self.xmlOutDir, self.xmlProcDir,
                                filename, createToDir=False)
             except OSError:
                 raise Exception("Move file:" + filename +
