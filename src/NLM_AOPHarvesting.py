@@ -77,7 +77,7 @@ class NLM_AOPHarvesting(Harvesting):
                   "download dir")
             print("----------------------------------------------------------")
 
-        self.ahead.syncWorkDir(self.verbose, dateBegin, hourBegin)
+        self.ahead.syncWorkDir(dateBegin, hourBegin, self.verbose)
 
     def getHarvStatDoc(self,
                        id_,

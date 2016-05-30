@@ -84,7 +84,6 @@ class NLM_AheadOfPrint:
             doc["status"] = "in process"
             doc["process"] = self.process_
             doc["owner"] = self.owner
-            # self.mid.saveDoc(doc)  # Save document into mongo
             self.mid.bulkInsertDoc(doc)  # Save document into mongo
         else:
             # If document is not new and its status is not ahead of print
@@ -129,7 +128,7 @@ class NLM_AheadOfPrint:
             print("Checking " + str(id_size) + " documents: ",
                   end='', flush=True)
 
-        bulkCount = 1
+        bulkCount = 0
         bulkRemaining = False
         for id_ in ids:
             # Insert id document into collection "id"
@@ -138,10 +137,9 @@ class NLM_AheadOfPrint:
                 newDocs.append(id_)
                 bulkCount += 1
                 bulkRemaining = True
-
-            if bulkCount % 100 == 0:
-                self.mid.bulkWrite()
-                bulkRemaining = False
+                if bulkCount % 100 == 0:
+                    self.mid.bulkWrite()
+                    bulkRemaining = False
 
             if verbose:
                 ch = '+' if isNewDoc else '.'
@@ -160,6 +158,7 @@ class NLM_AheadOfPrint:
             diter = DocIterator(newDocs, verbose=verbose)
 
             bulkCount = 0
+            bulkRemaining = False
 
             for dId in diter:
                 docId = dId[0]
@@ -169,7 +168,6 @@ class NLM_AheadOfPrint:
                 Tools.xmlToFile(docId, xml, xdir, encoding)  # save into file
                 docDict = xmltodict.parse(xml)
                 doc = {"_id": docId, "doc": docDict}
-                # self.mdoc.saveDoc(doc)  # save into mongo 'doc' collection
                 self.mdoc.bulkInsertDoc(doc)  # save into mongo 'doc' coll
 
                 # Change document document status from 'in process' to
@@ -441,7 +439,7 @@ class NLM_AheadOfPrint:
             # Move xml physical file
             filename = id_ + ".xml"
             try:
-                Tools.moveFile(self.xmlOutDir, self.xmlProcDir,
+                Tools.moveFile(self.xmlOutDir, se elf.xmlProcDir,
                                filename, createToDir=False)
             except OSError:
                 raise Exception("Move file:" + filename +
