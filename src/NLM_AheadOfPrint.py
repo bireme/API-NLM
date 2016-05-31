@@ -446,6 +446,9 @@ class NLM_AheadOfPrint:
                                 " from:" + self.xmlOutDir +
                                 " to:" + self.xmlProcDir + " error")
 
+            # Delete document in doc collection
+            self.mdoc.bulkDeleteDoc({"_id": id_})
+
             # Change document document status from 'aheadofprint' to
             # 'moved' in id collection.
             self.mid.bulkUpdateDoc({"id": id_},

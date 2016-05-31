@@ -86,7 +86,16 @@ class MyMongo:
         query - doc dictionary to find the document
         update - doc dictionary of the update part of document
         """
-        self.bulk.find(query).update_one({"$set": update})
+        self.bulk.update_one(query, {"$set": update})
+
+    def bulkDeleteDoc(self,
+                      query):
+        """
+        Find a document and delete it.
+        query - doc dictionary to find the document
+        """
+        self.bulk.delete_one(query)
+
 
     def loadDoc(self, id_):
         """
