@@ -49,10 +49,6 @@ class MyMongo:
         self.ASCENDING = pymongo.ASCENDING
         self.DESCENDING = pymongo.DESCENDING
 
-    def bulkClean(self):
-        """Reinitalize the write bulk."""
-        self.bulk = self.col.initialize_unordered_bulk_op()
-
     def saveDoc(self, doc):
         """
         Save a new document into the selected collection.
@@ -60,14 +56,6 @@ class MyMongo:
         doc - mongo document represented as a dictionary
         """
         self.col.insert_one(doc)
-
-    def bulkInsertDoc(self, doc):
-        """
-        Insert a document into write bulk.
-
-        doc - mongo document represented as a dictionary
-        """
-        self.bulk.insert(doc)
 
     def replaceDoc(self, doc):
         """
@@ -77,25 +65,6 @@ class MyMongo:
         """
         _id = {'_id': doc['_id']}
         self.col.replace_one(_id, doc, upsert=True)
-
-    def bulkUpdateDoc(self,
-                      query,
-                      update):
-        """
-        Find a document and update it.
-        query - doc dictionary to find the document
-        update - doc dictionary of the update part of document
-        """
-        self.bulk.update_one(query, {"$set": update})
-
-    def bulkDeleteDoc(self,
-                      query):
-        """
-        Find a document and delete it.
-        query - doc dictionary to find the document
-        """
-        self.bulk.delete_one(query)
-
 
     def loadDoc(self, id_):
         """
@@ -144,9 +113,7 @@ class MyMongo:
         self.col.reindex()
 
     def listIndexes(self):
-        """
-        Returns a list of names of the collection indexes
-        """
+        """Return a list of names of the collection indexes."""
         idx = []
         for index in self.col.list_indexes():
             idx.append(index['name'])
@@ -178,7 +145,39 @@ class MyMongo:
         """
         return self.col.findOne(query)
 
+    def bulkClean(self):
+        """Reinitalize the write bulk."""
+        self.bulk = self.col.initialize_unordered_bulk_op()
+
     def bulkWrite(self):
         """Write documents from write bulk."""
         self.bulk.execute()
         self.bulkClean()
+
+    def bulkInsertDoc(self, doc):
+        """
+        Insert a document into write bulk.
+
+        doc - mongo document represented as a dictionary
+        """
+        self.bulk.insert(doc)
+
+    def bulkUpdateDoc(self,
+                      query,
+                      update):
+        """
+        Find a document and update it.
+
+        query - doc dictionary to find the document
+        update - doc dictionary of the update part of document
+        """
+        self.bulk.find(query).update_one({"$set": update})
+
+    def bulkDeleteDoc(self,
+                      query):
+        """
+        Find a document and delete it.
+
+        query - doc dictionary to find the document
+        """
+        self.bulk.find(query).delete_one()
