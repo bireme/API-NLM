@@ -180,4 +180,4 @@ class MyMongo:
 
         query - doc dictionary to find the document
         """
-        self.bulk.find(query).delete_one()
+        self.bulk.find(query).remove_one()
