@@ -73,11 +73,9 @@ class NLM_AheadOfPrint:
         """
         # Document is new if it is not in id collection or if its status is
         # 'in process' meaning that a previous download was unfinished.
-        query = {"id": docId, "status": {"$ne": "in process"}}
-        cursor = self.mid.search(query)
-        isNew = (cursor.count() == 0)
-
-        if isNew:
+        doc = self.mid.searchOne({"id": docId})
+        if doc is None:
+            isNew = True
             doc = {"id": docId}
             doc["date"] = dateBegin
             doc["hour"] = hourBegin
@@ -86,11 +84,8 @@ class NLM_AheadOfPrint:
             doc["owner"] = self.owner
             self.mid.bulkInsertDoc(doc)  # Save document into mongo
         else:
-            # If document is not new and its status is not ahead of print
-            # status='no_aheadofprint' or status='moved',
-            # delete the physical file and from doc collection.
-            oldDoc = cursor[0]
-            if oldDoc["status"] != 'aheadofprint':
+            if doc["status"] is "in process":
+                isNew = True
                 fpath = join(self.xmlOutDir, docId + ".xml")
                 if Tools.existFile(fpath):
                     try:
@@ -99,6 +94,9 @@ class NLM_AheadOfPrint:
                         raise Exception("Document id:" + str(docId) +
                                         " deletion failed")
                 self.mdoc.deleteDoc(docId)
+
+            else:  # aheadofprint, no_aheadofprint, moved
+                isNew = False
 
         return isNew
 
