@@ -143,7 +143,7 @@ class MyMongo:
         query - map with field/value elements
         Returns only one document or None if no one was found
         """
-        return self.col.findOne(query)
+        return self.col.find_one(query)
 
     def bulkClean(self):
         """Reinitalize the write bulk."""
