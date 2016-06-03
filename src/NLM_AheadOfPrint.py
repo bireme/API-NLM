@@ -221,7 +221,7 @@ class NLM_AheadOfPrint:
         tot = cursor.count()
 
         for oldDoc in cursor:
-            id_ = oldDoc["_id"]
+            id_ = oldDoc["id"]
             # Deletes the xml physical file
             fpath = join(self.xmlOutDir, id_ + ".xml")
             try:
@@ -233,13 +233,14 @@ class NLM_AheadOfPrint:
             self.mdoc.deleteDoc(id_)
 
             # Update id mongo doc
-            doc = {"id": id_}
+            doc = {"_id": oldDoc["_id"]}
+            doc["id"] = id_
             doc["date"] = dateBegin
             doc["hour"] = hourBegin
             doc["status"] = "no_aheadofprint"
             doc["process"] = self.process_
             doc["owner"] = self.owner
-            self.mid.saveDoc(doc)
+            self.mid.replaceDoc(doc)
         if verbose:
             print("Total: " + str(tot) + " xml files were deleted.")
 
