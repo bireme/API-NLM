@@ -191,6 +191,13 @@ class NLM_AheadOfPrint:
             if verbose:
                 print()  # to print a new line
 
+    def __checkInProcess(self):
+        """Check if there are documents with "in process" status."""
+        query = {"status": "in process"}
+        cursor = self.mid.search(query)
+
+        return cursor.count() > 0
+
     def __changeDocStatus(self,
                           ids,
                           dateBegin,
@@ -207,8 +214,9 @@ class NLM_AheadOfPrint:
         verbose - if True prints document id into standard output
         """
         # Searches all documents in the 'doc' collection that belongs to the
-        # ids list. If document is not in the list, delete it.
-        query = {"_id": {"$nin": ids}}
+        # ids list. If document is not in the list and is aheadofprint,
+        # delete it.
+        query = {"_id": {"$nin": ids}, "status": "aheadofprint"}
         cursor = self.mdoc.search(query)
         tot = cursor.count()
 
