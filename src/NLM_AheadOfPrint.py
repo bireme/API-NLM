@@ -332,10 +332,19 @@ class NLM_AheadOfPrint:
         """
         removed = 0  # Removed xml files
 
+        if verbose:
+            current = 0
+            print("\n", end='', flush=True)
+
         # For all id of documents in medline processing directory
         #  idList = Tools.readFile2(idFile)
         f = open(idFile, encoding="UTF-8")
         for id_ in f:
+            if verbose:
+                current += 1
+                if current % 1000 == 0:
+                    print(".", end='', flush=True)
+
             id_ = id_.strip()
             if len(id_) > 0:
                 # If there is such document
