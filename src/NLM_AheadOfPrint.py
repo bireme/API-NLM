@@ -216,8 +216,8 @@ class NLM_AheadOfPrint:
         # Searches all documents in the 'doc' collection that belongs to the
         # ids list. If document is not in the list and is aheadofprint,
         # delete it.
-        query = {"_id": {"$nin": ids}, "status": "aheadofprint"}
-        cursor = self.mdoc.search(query)
+        query = {"id": {"$nin": ids}, "status": "aheadofprint"}
+        cursor = self.mid.search(query)
         tot = cursor.count()
 
         for oldDoc in cursor:
