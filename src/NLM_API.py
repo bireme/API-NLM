@@ -156,7 +156,7 @@ class NLM_API:
             if retmax > 0:
                 id_list = xml.getXPath("eSearchResult/IdList/Id")
                 for id_ in id_list:
-                    ids.append(id_[0])
+                    ids.append(str(id_[0]))
         else:
             if waitSeconds <= 3600:  # waits up to 1 hour and try again
                 if verbose:
