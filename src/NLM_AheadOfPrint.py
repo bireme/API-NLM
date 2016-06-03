@@ -342,7 +342,7 @@ class NLM_AheadOfPrint:
         for id_ in f:
             if verbose:
                 current += 1
-                if current % 1000 == 0:
+                if current % 10000 == 0:
                     print(".", end='', flush=True)
 
             id_ = id_.strip()
