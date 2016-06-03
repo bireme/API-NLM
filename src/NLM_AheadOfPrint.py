@@ -128,6 +128,7 @@ class NLM_AheadOfPrint:
 
         bulkCount = 0
         bulkRemaining = False
+        print("Numero de ids baixados: " + str(id_size))
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId(id_, dateBegin, hourBegin)
@@ -149,6 +150,7 @@ class NLM_AheadOfPrint:
             bulkRemaining = False
 
         newDocLen = len(newDocs)
+        print("Numero de ids novos: " + str(newDocLen))
         if newDocLen > 0:
             if verbose:
                 print("\nDownloading and saving " + str(newDocLen) +
@@ -185,6 +187,7 @@ class NLM_AheadOfPrint:
                 self.mid.bulkWrite()
                 self.mdoc.bulkWrite()
 
+            print("Documentos escritos: " + str(bulkCount))
             if verbose:
                 print()  # to print a new line
 
@@ -195,9 +198,9 @@ class NLM_AheadOfPrint:
                           verbose=False):
         """
         Change the document status from "aheadofprint" to
+
         "no_aheadofprint" if MongoDb lastHarvesting document field is not
         in the ids list.
-
         ids - list of aheadofprint document ids
         dateBegin - process begin date YYYYMMDD
         hourBegin - process begin time HH:MM:SS
@@ -207,6 +210,7 @@ class NLM_AheadOfPrint:
         # ids list. If document is not in the list, delete it.
         query = {"_id": {"$nin": ids}}
         cursor = self.mdoc.search(query)
+        tot = cursor.count()
 
         for oldDoc in cursor:
             id_ = oldDoc["_id"]
@@ -229,7 +233,7 @@ class NLM_AheadOfPrint:
             doc["owner"] = self.owner
             self.mid.saveDoc(doc)
         if verbose:
-            print("Total: " + str(cursor.count()) + " xml files were deleted.")
+            print("Total: " + str(tot) + " xml files were deleted.")
 
     def __getDocIdList(self,
                        filePath,
@@ -320,8 +324,10 @@ class NLM_AheadOfPrint:
         """
         removed = 0  # Removed xml files
 
-        idList = Tools.readLine2(idFile)
-        for id_ in idList:
+        # For all id of documents in medline processing directory
+        #  idList = Tools.readFile2(idFile)
+        f = open(idFile, encoding="UTF-8")
+        for id_ in f:
             id_ = id_.strip()
             if len(id_ > 0):
                 # If there is such document
@@ -348,6 +354,8 @@ class NLM_AheadOfPrint:
                     doc["owner"] = self.owner
                     self.mid.saveDoc(doc)    # create new id mongo doc
                     removed += 1
+        f.close()
+
         if verbose:
             print("\nTotal: " + str(removed) + " xml files were deleted.")
 
@@ -420,7 +428,8 @@ class NLM_AheadOfPrint:
         # Remove duplicated documents from processing directory and workDir
         if verbose:
             print("\nRemoving duplicated xml files: ", end="", flush=True)
-        self.__changeDocStatus2(dateBegin, hourBegin, "medline*.xml", verbose)
+        idFile = join(self.xmlProcDir, "pmid_update_medline.txt")
+        self.__changeDocStatus3(dateBegin, hourBegin, idFile, verbose)
 
         # Copy all xml files to the oficial processing directory
         if verbose:
