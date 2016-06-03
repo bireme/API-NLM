@@ -128,7 +128,7 @@ class NLM_AheadOfPrint:
 
         bulkCount = 0
         bulkRemaining = False
-        print("Numero de ids baixados: " + str(id_size))
+        print("\nNumero de ids baixados: " + str(id_size))
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId(id_, dateBegin, hourBegin)
@@ -150,7 +150,7 @@ class NLM_AheadOfPrint:
             bulkRemaining = False
 
         newDocLen = len(newDocs)
-        print("Numero de ids novos: " + str(newDocLen))
+        print("\nNumero de ids novos: " + str(newDocLen))
         if newDocLen > 0:
             if verbose:
                 print("\nDownloading and saving " + str(newDocLen) +
@@ -187,7 +187,7 @@ class NLM_AheadOfPrint:
                 self.mid.bulkWrite()
                 self.mdoc.bulkWrite()
 
-            print("Documentos escritos: " + str(bulkCount))
+            print("\nDocumentos escritos: " + str(bulkCount))
             if verbose:
                 print()  # to print a new line
 
@@ -445,7 +445,8 @@ class NLM_AheadOfPrint:
 
         # Remove duplicated documents from processing directory and workDir
         if verbose:
-            print("\nRemoving duplicated xml files: ", end="", flush=True)
+            print("\nChecking and removing duplicated xml files: ", end="",
+                  flush=True)
         idFile = join(self.xmlProcDir, "pmid_update_medline.txt")
         self.__changeDocStatus3(dateBegin, hourBegin, idFile, verbose)
 
