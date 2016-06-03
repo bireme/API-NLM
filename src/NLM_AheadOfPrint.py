@@ -337,7 +337,7 @@ class NLM_AheadOfPrint:
         f = open(idFile, encoding="UTF-8")
         for id_ in f:
             id_ = id_.strip()
-            if len(id_ > 0):
+            if len(id_) > 0:
                 # If there is such document
                 query = {"_id": id_}
                 cursor = self.mdoc.search(query)
