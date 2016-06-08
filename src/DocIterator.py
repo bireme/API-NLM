@@ -57,8 +57,15 @@ class DocIterator:
         if self.total == 0:
             raise Exception("Empty id list")
 
+        if self.total > size:
+            self.blockSize = size
+            self.lastBlock = (self.total / size)
+        else:
+            self.blockSize = self.total
+            self.lastBlock = 0
+
         self.blockSize = size if self.total > size else self.total
-        self.lastBlock = (self.total / self.blockSize) - 1
+        self.lastBlock = (self.total / self.blockSize)
         self.curBlock = 0
         self.curBlkPos = 0
         self.xmlBlock = []
@@ -70,17 +77,17 @@ class DocIterator:
         self.__loadBlock(0)
 
     def __iter__(self):
-        """Turn this class iterable"""
+        """Turn this class iterable."""
         return self
 
     def __next__(self):
-        """Return the next pair (<id>,<downloaded xml document>)"""
+        """Return the next pair (<id>,<downloaded xml document>)."""
         xml = None
-        if self.curBlkPos <= len(self.xmlBlock) - 1:
+        if self.curBlkPos < len(self.xmlBlock):
             xml = self.xmlBlock[self.curBlkPos]
             self.curBlkPos += 1
         else:
-            if self.curBlock < self.lastBlock:
+            if self.curBlock <= self.lastBlock:
                 self.__loadBlock(self.curBlock + 1)
                 xml = self.__next__()
             else:
@@ -152,7 +159,8 @@ class DocIterator:
     def __getIds(self,
                  retStart):
         """
-        Retrieve the next ids to be used to download the xml documents
+        Retrieve the next ids to be used to download the xml documents.
+
         retStart - the initial id position
         Returns a pair (<list of ids>, <string with next ids>)
         """
