@@ -64,8 +64,6 @@ class DocIterator:
             self.blockSize = self.total
             self.lastBlock = 0
 
-        self.blockSize = size if self.total > size else self.total
-        self.lastBlock = (self.total / self.blockSize)
         self.curBlock = 0
         self.curBlkPos = 0
         self.xmlBlock = []
@@ -87,7 +85,7 @@ class DocIterator:
             xml = self.xmlBlock[self.curBlkPos]
             self.curBlkPos += 1
         else:
-            if self.curBlock <= self.lastBlock:
+            if self.curBlock < self.lastBlock:
                 self.__loadBlock(self.curBlock + 1)
                 xml = self.__next__()
             else:
@@ -153,6 +151,8 @@ class DocIterator:
         for elem in elems:
             ret.append((ids[idx], mxml.getTreeString(elem).strip()))
             idx += 1
+        if idx != len(ids):
+            raise Exception("Invalid retrieved xml documents")
 
         return ret
 
