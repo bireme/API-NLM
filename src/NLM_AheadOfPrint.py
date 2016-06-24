@@ -58,6 +58,7 @@ class NLM_AheadOfPrint:
 
         self.mid.createIndex("id", ["id"])
         self.mid.createIndex("id_status", ["id", "status"])
+        self.mid.createIndex("date_hour_status", ["date", "hour", "status"])
 
     def __insertDocId(self,
                       docId,

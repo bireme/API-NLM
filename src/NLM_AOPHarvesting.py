@@ -100,23 +100,27 @@ class NLM_AOPHarvesting(Harvesting):
         dateEnd - process end date YYYYMMDD
         hourEnd - process end time HH:MM:SS
         """
-        query0 = {"status": "no_aheadofprint"}
-        query1 = {"date": dateBegin, "hour": hourBegin,
-                  "status": "aheadofprint"}
-        query2 = {"date": dateBegin, "hour": hourBegin,
-                  "status": "in process"}
+        query0 = {"status": "aheadofprint"}
+        query1 = {"status": "no_aheadofprint"}
+        query2 = {"status": "in process"}
         query3 = {"date": dateBegin, "hour": hourBegin,
+                  "status": "aheadofprint"}
+        query4 = {"date": dateBegin, "hour": hourBegin,
+                  "status": "in process"}
+        query5 = {"date": dateBegin, "hour": hourBegin,
                   "status": "no_aheadofprint"}
-        totalAheadDocs = self.mdoc.search({}).count()
-        totalNoAheadDocs = self.mid.search(query0).count()
-        newAheadDocs = self.mid.search(query1).count()
-        newInProcessDocs = self.mid.search(query2).count()
-        newNoAheadDocs = self.mid.search(query3).count()
+        totalAheadDocs = self.mdid.search(query0).count()
+        totalNoAheadDocs = self.mid.search(query1).count()
+        totalInProcessDocs = self.mid.search(query2).count()
+        newAheadDocs = self.mid.search(query3).count()
+        newInProcessDocs = self.mid.search(query4).count()
+        newNoAheadDocs = self.mid.search(query5).count()
 
         doc = {"_id": id_,
                "process": process, "owner": owner, "status": status,
                "totAheadDocs": totalAheadDocs,
                "totNoAheadDocs": totalNoAheadDocs,
+               "totInProcessDocs": totalInProcessDocs,
                "newAheadDocs": newAheadDocs,
                "newInProcessDocs": newInProcessDocs,
                "newNoAheadDocs": newNoAheadDocs,
@@ -146,13 +150,16 @@ class NLM_AOPHarvesting(Harvesting):
         dateEnd - process end date YYYYMMDD
         hourEnd - process end time HH:MM:SS
         """
-        query = {"date": dateBegin, "hour": hourBegin,
-                 "status": "moved"}
-        totalMovedDocs = self.mid.search(query).count()
+        query0 = {"status": "moved"}
+        query1 = {"date": dateBegin, "hour": hourBegin,
+                  "status": "moved"}
+        totalMovedDocs = self.mid.search(query0).count()
+        newMovedDocs = self.mid.search(query1).count()
 
         doc = {"_id": id_,
                "process": process, "owner": owner, "status": status,
                "totMovedDocs": totalMovedDocs,
+               "newMovedDocs": newMovedDocs,
                "dateBegin": dateBegin, "hourBegin": hourBegin,
                "dateEnd": dateEnd, "hourEnd": hourEnd}
 

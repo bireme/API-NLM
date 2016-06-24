@@ -163,6 +163,7 @@ if __name__ == "__main__":
         print("HourEnd=" + result["hourEnd"])
         print("TotAheadDocs=" + str(result["totAheadDocs"]))
         print("TotNoAheadDocs=" + str(result["totNoAheadDocs"]))
+        print("TotInProcessDocs=" + str(result["totInProcessDocs"]))
         print("NewAheadDocs=" + str(result["newAheadDocs"]))
         print("NewInProcessDocs=" + str(result["newInProcessDocs"]))
         print("NewNoAheadDocs=" + str(result["newNoAheadDocs"]))
@@ -178,3 +179,4 @@ if __name__ == "__main__":
         print("DateEnd=" + result["dateEnd"])
         print("HourEnd=" + result["hourEnd"])
         print("TotMovedDocs=" + str(result["totMovedDocs"]))
+        print("NewMovedDocs=" + str(result["newMovedDocs"]))
