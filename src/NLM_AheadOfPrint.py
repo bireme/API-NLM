@@ -152,7 +152,7 @@ class NLM_AheadOfPrint:
             self.mid.bulkWrite()
             bulkRemaining = False
 
-        if ((buldCount + notWrittenDocs) != id_size):
+        if ((bulkCount + notWrittenDocs) != id_size):
             raise Exception("__insertDocs: some doc ids were not written")
 
         newDocLen = len(newDocs)
