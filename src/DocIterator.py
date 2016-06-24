@@ -54,15 +54,15 @@ class DocIterator:
 
         self.ids = ids
         self.total = len(ids)
+        self.remaining = self.total
+
         if self.total == 0:
             raise Exception("Empty id list")
 
         if self.total > size:
             self.blockSize = size
-            self.lastBlock = (self.total / size)
         else:
             self.blockSize = self.total
-            self.lastBlock = 0
 
         self.curBlock = 0
         self.curBlkPos = 0
@@ -84,15 +84,12 @@ class DocIterator:
         if self.curBlkPos < len(self.xmlBlock):
             print("next - proximo documento [" + str(self.curBlkPos) + "] já está carragado. Tome-o!", flush=True)
             xml = self.xmlBlock[self.curBlkPos]
+            self.remaining -= 1
             self.curBlkPos += 1
         else:
-            print("next - proximo documento não está carr:agado. Carregando próximo bloco de documentos.", flush=True)
-            if self.curBlock < self.lastBlock:
-                self.__loadBlock(self.curBlock + 1)
-                xml = self.__next__()
-            else:
-                print("next - já pegamos todos os documentos. Retorno fim de iterador.", flush=True)
-                raise StopIteration()
+            self.__loadBlock(self.curBlock + 1)
+            xml = self.__next__()
+
         return xml
 
     def __loadBlock(self,
@@ -137,6 +134,8 @@ class DocIterator:
                     raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +
                                     xmlRes[1] + " url:" + self.url)
         else:
+            if (self.remaining > 0):
+                raise Exception("Not all documents were made available by iterator")
             print("__loadBlock - não vou carregar nada pois o último bloco carragável já foi lido", flush=True)
             raise StopIteration()
 

@@ -127,6 +127,7 @@ class NLM_AheadOfPrint:
                   end='', flush=True)
 
         bulkCount = 0
+        notWrittenDocs = 0
         bulkRemaining = False
         print("\nNumero de ids baixados: " + str(id_size))
         for id_ in ids:
@@ -139,6 +140,8 @@ class NLM_AheadOfPrint:
                 if bulkCount % 100 == 0:
                     self.mid.bulkWrite()
                     bulkRemaining = False
+            else:
+                notWrittenDocs += 1
 
             if verbose:
                 ch = '+' if isNewDoc else '.'
@@ -148,6 +151,9 @@ class NLM_AheadOfPrint:
         if bulkRemaining:
             self.mid.bulkWrite()
             bulkRemaining = False
+
+        if ((buldCount + notWrittenDocs) != id_size):
+            raise Exception("__insertDocs: some doc ids were not written")
 
         newDocLen = len(newDocs)
         print("\nNumero de ids novos: " + str(newDocLen))
@@ -186,6 +192,9 @@ class NLM_AheadOfPrint:
             if bulkRemaining:
                 self.mid.bulkWrite()
                 self.mdoc.bulkWrite()
+
+            if (bulkCount != newDocLen):
+                raise Exception("__insertDocs: some new docs were not written")
 
             print("\nDocumentos escritos: " + str(bulkCount))
             if verbose:

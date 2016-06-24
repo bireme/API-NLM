@@ -104,17 +104,21 @@ class NLM_AOPHarvesting(Harvesting):
         query1 = {"date": dateBegin, "hour": hourBegin,
                   "status": "aheadofprint"}
         query2 = {"date": dateBegin, "hour": hourBegin,
+                  "status": "in process"}
+        query3 = {"date": dateBegin, "hour": hourBegin,
                   "status": "no_aheadofprint"}
         totalAheadDocs = self.mdoc.search({}).count()
         totalNoAheadDocs = self.mid.search(query0).count()
         newAheadDocs = self.mid.search(query1).count()
-        newNoAheadDocs = self.mid.search(query2).count()
+        newInProcessDocs = self.mid.search(query2).count()
+        newNoAheadDocs = self.mid.search(query3).count()
 
         doc = {"_id": id_,
                "process": process, "owner": owner, "status": status,
                "totAheadDocs": totalAheadDocs,
                "totNoAheadDocs": totalNoAheadDocs,
                "newAheadDocs": newAheadDocs,
+               "newInProcessDocs": newInProcessDocs,
                "newNoAheadDocs": newNoAheadDocs,
                "dateBegin": dateBegin, "hourBegin": hourBegin,
                "dateEnd": dateEnd, "hourEnd": hourEnd}
