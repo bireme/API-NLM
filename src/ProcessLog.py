@@ -164,9 +164,11 @@ if __name__ == "__main__":
         print("TotAheadDocs=" + str(result["totAheadDocs"]))
         print("TotNoAheadDocs=" + str(result["totNoAheadDocs"]))
         print("TotInProcessDocs=" + str(result["totInProcessDocs"]))
+        print("TotMovedDocs=" + str(result["totMovedDocs"]))
         print("NewAheadDocs=" + str(result["newAheadDocs"]))
         print("NewInProcessDocs=" + str(result["newInProcessDocs"]))
         print("NewNoAheadDocs=" + str(result["newNoAheadDocs"]))
+        print("")
 
     result = log.moveDocs()
 

@@ -103,24 +103,27 @@ class NLM_AOPHarvesting(Harvesting):
         query0 = {"status": "aheadofprint"}
         query1 = {"status": "no_aheadofprint"}
         query2 = {"status": "in process"}
-        query3 = {"date": dateBegin, "hour": hourBegin,
-                  "status": "aheadofprint"}
+        query3 = {"status": "moved"}
         query4 = {"date": dateBegin, "hour": hourBegin,
-                  "status": "in process"}
+                  "status": "aheadofprint"}
         query5 = {"date": dateBegin, "hour": hourBegin,
+                  "status": "in process"}
+        query6 = {"date": dateBegin, "hour": hourBegin,
                   "status": "no_aheadofprint"}
         totalAheadDocs = self.mid.search(query0).count()
         totalNoAheadDocs = self.mid.search(query1).count()
         totalInProcessDocs = self.mid.search(query2).count()
-        newAheadDocs = self.mid.search(query3).count()
-        newInProcessDocs = self.mid.search(query4).count()
-        newNoAheadDocs = self.mid.search(query5).count()
+        totalMovedDocs = self.mid.search(query3).count()
+        newAheadDocs = self.mid.search(query4).count()
+        newInProcessDocs = self.mid.search(query5).count()
+        newNoAheadDocs = self.mid.search(query6).count()
 
         doc = {"_id": id_,
                "process": process, "owner": owner, "status": status,
                "totAheadDocs": totalAheadDocs,
                "totNoAheadDocs": totalNoAheadDocs,
                "totInProcessDocs": totalInProcessDocs,
+               "totMovedDocs": totalMovedDocs,
                "newAheadDocs": newAheadDocs,
                "newInProcessDocs": newInProcessDocs,
                "newNoAheadDocs": newNoAheadDocs,
