@@ -118,10 +118,11 @@ class ProcessLog:
         now2 = datetime.now()
         dateEnd = datetime.strftime(now2, "%Y%m%d")
         hourEnd = datetime.strftime(now2, "%H:%M:%S")
-        doc = self.harvesting.getMovStatDoc(id_, self.process + "_moving",
-                                            self.owner, status,
-                                            dateBegin, hourBegin,
-                                            dateEnd, hourEnd)
+        doc = self.harvesting.getHarvStatDoc(id_,
+                                             self.process + "_moving",
+                                             self.owner, status,
+                                             dateBegin, hourBegin,
+                                             dateEnd, hourEnd)
         self.mongodbLog.replaceDoc(doc)
 
         return doc

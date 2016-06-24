@@ -110,6 +110,8 @@ class NLM_AOPHarvesting(Harvesting):
                   "status": "in process"}
         query6 = {"date": dateBegin, "hour": hourBegin,
                   "status": "no_aheadofprint"}
+        query7 = {"date": dateBegin, "hour": hourBegin,
+                  "status": "moved"}
         totalAheadDocs = self.mid.search(query0).count()
         totalNoAheadDocs = self.mid.search(query1).count()
         totalInProcessDocs = self.mid.search(query2).count()
@@ -117,6 +119,7 @@ class NLM_AOPHarvesting(Harvesting):
         newAheadDocs = self.mid.search(query4).count()
         newInProcessDocs = self.mid.search(query5).count()
         newNoAheadDocs = self.mid.search(query6).count()
+        newMovedDocs = self.mid.search(query7).count()
 
         doc = {"_id": id_,
                "process": process, "owner": owner, "status": status,
@@ -127,41 +130,6 @@ class NLM_AOPHarvesting(Harvesting):
                "newAheadDocs": newAheadDocs,
                "newInProcessDocs": newInProcessDocs,
                "newNoAheadDocs": newNoAheadDocs,
-               "dateBegin": dateBegin, "hourBegin": hourBegin,
-               "dateEnd": dateEnd, "hourEnd": hourEnd}
-
-        return doc
-
-    def getMovStatDoc(self,
-                      id_,
-                      process,
-                      owner,
-                      status,
-                      dateBegin,
-                      hourBegin,
-                      dateEnd,
-                      hourEnd):
-        """
-        Return a dictionary with moving statistic info.
-
-        id_ - document id
-        process - moving process name
-        owner - moving process owner
-        status - moving process status result
-        dateBegin - process begin date YYYYMMDD
-        hourBegin - process begin time HH:MM:SS
-        dateEnd - process end date YYYYMMDD
-        hourEnd - process end time HH:MM:SS
-        """
-        query0 = {"status": "moved"}
-        query1 = {"date": dateBegin, "hour": hourBegin,
-                  "status": "moved"}
-        totalMovedDocs = self.mid.search(query0).count()
-        newMovedDocs = self.mid.search(query1).count()
-
-        doc = {"_id": id_,
-               "process": process, "owner": owner, "status": status,
-               "totMovedDocs": totalMovedDocs,
                "newMovedDocs": newMovedDocs,
                "dateBegin": dateBegin, "hourBegin": hourBegin,
                "dateEnd": dateEnd, "hourEnd": hourEnd}
