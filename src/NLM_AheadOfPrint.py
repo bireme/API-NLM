@@ -457,7 +457,7 @@ class NLM_AheadOfPrint:
         if verbose:
             print("\nChecking and removing duplicated xml files: ", end="",
                   flush=True)
-        idFile = join(self.xmlProcDir, "pmid_update_medline.txt")
+        idFile = join(self.xmlProcDir, "pmid_medline_no_aheadofprint.txt")
         self.__changeDocStatus3(dateBegin, hourBegin, idFile, verbose)
 
         # Copy all xml files to the oficial processing directory
