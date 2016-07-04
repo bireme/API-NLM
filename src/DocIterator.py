@@ -82,7 +82,7 @@ class DocIterator:
         """Return the next pair (<id>,<downloaded xml document>)."""
         xml = None
         if self.curBlkPos < len(self.xmlBlock):
-            print("next - proximo documento [" + str(self.curBlkPos) + "] já está carragado. Tome-o!", flush=True)
+            # print("next - proximo documento [" + str(self.curBlkPos) + "] já está carragado. Tome-o!", flush=True)
             xml = self.xmlBlock[self.curBlkPos]
             self.remaining -= 1
             self.curBlkPos += 1
@@ -102,7 +102,7 @@ class DocIterator:
         waitSeconds - number of seconds the program will sleep it download
                       fails
         """
-        print("__loadBlock - carregando próximo bloco de documentos.", flush=True)
+        # print("__loadBlock - carregando próximo bloco de documentos.", flush=True)
         if self.verbose:
             if waitSeconds == 30:
                 print('.', end="", flush=True)
@@ -110,7 +110,7 @@ class DocIterator:
         block = []
         retStart = blkNumber * self.blockSize
         if retStart < self.total:
-            print("__loadBlock - preciso saber os identificadores dos documentos a serem carregados.", flush=True)
+            # print("__loadBlock - preciso saber os identificadores dos documentos a serem carregados.", flush=True)
             pair = self.__getIds(retStart)
             self.postParam["id"] = pair[1]
             xmlRes = loadUrl(self.url, post_values=self.postParam)
@@ -120,9 +120,9 @@ class DocIterator:
                 block = self.__splitBlock(pair[0], xmlRes[1])
                 self.curBlock = blkNumber
                 self.curBlkPos = 0
-                print("__loadBlock - Total de documentos feito o xpath:" + str(len(block)), flush=True)
+                # print("__loadBlock - Total de documentos feito o xpath:" + str(len(block)), flush=True)
             else:
-                print("__loadBlock - problemas ao carragar bloco de documentos. Vou tentar novamente.", flush=True)
+                # print("__loadBlock - problemas ao carragar bloco de documentos. Vou tentar novamente.", flush=True)
                 if waitSeconds <= 3600:  # waits up to 1 hour and try again
                     if self.verbose:
                         print("(" + str(waitSeconds) + "s)", end="",
@@ -130,13 +130,13 @@ class DocIterator:
                     time.sleep(waitSeconds)
                     self.__loadBlock(blkNumber, waitSeconds * 2)
                 else:
-                    print("__loadBlock - não consegui carragar bloco de documentos.", flush=True)
+                    # print("__loadBlock - não consegui carragar bloco de documentos.", flush=True)
                     raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +
                                     xmlRes[1] + " url:" + self.url)
         else:
             if (self.remaining > 0):
                 raise Exception("Not all documents were made available by iterator")
-            print("__loadBlock - não vou carregar nada pois o último bloco carragável já foi lido", flush=True)
+            # print("__loadBlock - não vou carregar nada pois o último bloco carragável já foi lido", flush=True)
             raise StopIteration()
 
         self.xmlBlock = block
@@ -159,12 +159,12 @@ class DocIterator:
         for elem in elems:
             ret.append((ids[idx], mxml.getTreeString(elem).strip()))
             idx += 1
-        print("__splitBlock - de um arquivo xml, extraí " + str(idx) + " documentos.", flush=True)
+        # print("__splitBlock - de um arquivo xml, extraí " + str(idx) + " documentos.", flush=True)
         if idx != len(ids):
-            print("__splitBlock - Gerei uma exceção pois houve diferença entre números", flush=True)
-            print("__splitBlock - ids= " + str(ids), flush=True)
-            print("__splitBlock - elems= " + str(elems), flush=True)
-            print("__splitBlock - xml= [[[" + xml + "]]]", flush=True)
+            # print("__splitBlock - Gerei uma exceção pois houve diferença entre números", flush=True)
+            # print("__splitBlock - ids= " + str(ids), flush=True)
+            # print("__splitBlock - elems= " + str(elems), flush=True)
+            # print("__splitBlock - xml= [[[" + xml + "]]]", flush=True)
             raise Exception("Invalid retrieved xml documents")
 
         return ret
@@ -190,5 +190,5 @@ class DocIterator:
             id_ = self.ids[idx]
             ids_.append(id_)
             strg += str(id_)
-        print("__getIds - carreguei " + str(len(ids_)) + " ids.", flush=True)
+        # print("__getIds - carreguei " + str(len(ids_)) + " ids.", flush=True)
         return (ids_, strg)

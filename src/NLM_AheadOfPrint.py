@@ -130,7 +130,7 @@ class NLM_AheadOfPrint:
         bulkCount = 0
         notWrittenDocs = 0
         bulkRemaining = False
-        print("\nNumero de ids baixados: " + str(id_size))
+        # print("\nNumero de ids baixados: " + str(id_size))
         for id_ in ids:
             # Insert id document into collection "id"
             isNewDoc = self.__insertDocId(id_, dateBegin, hourBegin)
@@ -157,7 +157,7 @@ class NLM_AheadOfPrint:
             raise Exception("__insertDocs: some doc ids were not written")
 
         newDocLen = len(newDocs)
-        print("\nNumero de ids novos: " + str(newDocLen))
+        # print("\nNumero de ids novos: " + str(newDocLen))
         if newDocLen > 0:
             if verbose:
                 print("\nDownloading and saving " + str(newDocLen) +
@@ -197,7 +197,7 @@ class NLM_AheadOfPrint:
             if (bulkCount != newDocLen):
                 raise Exception("__insertDocs: some new docs were not written")
 
-            print("\nDocumentos escritos: " + str(bulkCount))
+            # print("\nDocumentos escritos: " + str(bulkCount))
             if verbose:
                 print()  # to print a new line
 
