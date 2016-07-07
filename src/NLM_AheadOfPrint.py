@@ -478,9 +478,13 @@ class NLM_AheadOfPrint:
                 Tools.moveFile(self.xmlOutDir, self.xmlProcDir,
                                filename, createToDir=False)
             except OSError:
-                raise Exception("Move file:" + filename +
-                                " from:" + self.xmlOutDir +
-                                " to:" + self.xmlProcDir + " error")
+                if verbose:
+                    print("Move file:" + filename +
+                          " from:" + self.xmlOutDir +
+                          " to:" + self.xmlProcDir + " error")
+                # raise Exception("Move file:" + filename +
+                #                 " from:" + self.xmlOutDir +
+                #                 " to:" + self.xmlProcDir + " error")
 
             # Delete document in doc collection
             self.mdoc.bulkDeleteDoc({"_id": id_})
