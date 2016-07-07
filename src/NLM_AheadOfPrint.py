@@ -77,7 +77,8 @@ class NLM_AheadOfPrint:
         doc = self.mid.searchOne({"id": docId})
         if doc is None:
             isNew = True
-            doc = {"id": docId}
+            doc = {"_id": docId}
+            doc["id"] = docId
             doc["date"] = dateBegin
             doc["hour"] = hourBegin
             doc["status"] = "in process"
@@ -194,7 +195,7 @@ class NLM_AheadOfPrint:
                 self.mid.bulkWrite()
                 self.mdoc.bulkWrite()
 
-            if (bulkCount != newDocLen):
+            if bulkCount != newDocLen:
                 raise Exception("__insertDocs: some new docs were not written")
 
             # print("\nDocumentos escritos: " + str(bulkCount))
@@ -215,7 +216,6 @@ class NLM_AheadOfPrint:
                           verbose=False):
         """
         Change the document status from "aheadofprint" to
-
         "no_aheadofprint" if MongoDb lastHarvesting document field is not
         in the ids list.
         ids - list of aheadofprint document ids
@@ -315,13 +315,14 @@ class NLM_AheadOfPrint:
                         self.mdoc.deleteDoc(id_)
 
                         # Update document status from mongo id collection
-                        doc = {"id": id_}
+                        doc = cursor[0]
+                        doc["id"] = id_
                         doc["date"] = dateBegin
                         doc["hour"] = hourBegin
                         doc["status"] = "no_aheadofprint"
                         doc["process"] = self.process_
                         doc["owner"] = self.owner
-                        self.mid.saveDoc(doc)    # create new id mongo doc
+                        self.mid.replaceDoc(doc)    # update id mongo doc
                         removed += 1
 
         if verbose:
@@ -374,13 +375,14 @@ class NLM_AheadOfPrint:
                     self.mdoc.deleteDoc(id_)
 
                     # Update document status from mongo id collection
-                    doc = {"id": id_}
+                    doc = cursor[0]
+                    doc["id"] = id_
                     doc["date"] = dateBegin
                     doc["hour"] = hourBegin
                     doc["status"] = "no_aheadofprint"
                     doc["process"] = self.process_
                     doc["owner"] = self.owner
-                    self.mid.saveDoc(doc)    # create new id mongo doc
+                    self.mid.replaceDoc(doc)    # replace id mongo doc
                     removed += 1
         f.close()
 
