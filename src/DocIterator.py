@@ -134,7 +134,7 @@ class DocIterator:
                     raise Exception("ErrCode:" + str(xmlRes[0]) + " reason:" +
                                     xmlRes[1] + " url:" + self.url)
         else:
-            if (self.remaining > 0):
+            if self.remaining > 0:
                 raise Exception("Not all documents were made available by iterator." +
                 " Remaining docs= " + str(self.remaining) + " Block number=" +
                 str(blkNumber) + " Total docs=" + str(self.total))

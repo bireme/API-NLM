@@ -315,7 +315,7 @@ class NLM_AheadOfPrint:
                         self.mdoc.deleteDoc(id_)
 
                         # Update document status from mongo id collection
-                        doc = cursor[0]
+                        doc = {"_id": id_}
                         doc["id"] = id_
                         doc["date"] = dateBegin
                         doc["hour"] = hourBegin
@@ -375,7 +375,7 @@ class NLM_AheadOfPrint:
                     self.mdoc.deleteDoc(id_)
 
                     # Update document status from mongo id collection
-                    doc = cursor[0]
+                    doc = {"_id": id_}
                     doc["id"] = id_
                     doc["date"] = dateBegin
                     doc["hour"] = hourBegin
@@ -453,6 +453,7 @@ class NLM_AheadOfPrint:
         verbose - True if processing progress should be printed into standard
                   output
         """
+
         nowDate = datetime.now()
 
         # Remove duplicated documents from processing directory and workDir
