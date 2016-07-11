@@ -120,6 +120,7 @@ class DocIterator:
                 block = self.__splitBlock(pair[0], xmlRes[1])
                 self.curBlock = blkNumber
                 self.curBlkPos = 0
+                self.xmlBlock = block
                 # print("__loadBlock - Total de documentos feito o xpath:" + str(len(block)), flush=True)
             else:
                 # print("__loadBlock - problemas ao carragar bloco de documentos. Vou tentar novamente.", flush=True)
@@ -141,8 +142,6 @@ class DocIterator:
             # print("__loadBlock - não vou carregar nada pois o último bloco carragável já foi lido", flush=True)
             raise StopIteration()
 
-        self.xmlBlock = block
-
     def __splitBlock(self,
                      ids,
                      xml):
@@ -155,19 +154,15 @@ class DocIterator:
         Returns a list of pairs (<id>, <xml document>)
         """
         ret = []
-        idx = 0
         mxml = MyXML(xml)
+        idx = 0
         elems = mxml.getXPathElements(self.xpath)
+        if len(ids) != len(elems):
+            raise Exception("Invalid retrieved xml documents")
+
         for elem in elems:
             ret.append((ids[idx], mxml.getTreeString(elem).strip()))
             idx += 1
-        # print("__splitBlock - de um arquivo xml, extraí " + str(idx) + " documentos.", flush=True)
-        if idx != len(ids):
-            # print("__splitBlock - Gerei uma exceção pois houve diferença entre números", flush=True)
-            # print("__splitBlock - ids= " + str(ids), flush=True)
-            # print("__splitBlock - elems= " + str(elems), flush=True)
-            # print("__splitBlock - xml= [[[" + xml + "]]]", flush=True)
-            raise Exception("Invalid retrieved xml documents")
 
         return ret
 
