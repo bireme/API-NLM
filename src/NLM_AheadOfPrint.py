@@ -23,8 +23,6 @@
 # =========================================================================
 
 from datetime import datetime
-import fnmatch
-import os
 from os.path import join
 import xmltodict
 from NLM_API import NLM_API
@@ -51,7 +49,6 @@ class NLM_AheadOfPrint:
         self.mid = factory.myMongoId
         self.mdoc = factory.myMongoDoc
         self.xmlOutDir = factory.xmlOutDir
-        self.xmlProcDir = factory.xmlProcDir
         self.encoding = factory.encoding
         self.process_ = factory.process
         self.owner = factory.owner
@@ -97,7 +94,7 @@ class NLM_AheadOfPrint:
                                         " deletion failed")
                 self.mdoc.deleteDoc(docId)
 
-            else:  # aheadofprint, no_aheadofprint, moved
+            else:  # aheadofprint, no_aheadofprint
                 isNew = False
 
         return isNew
@@ -270,125 +267,6 @@ class NLM_AheadOfPrint:
 
         return rex.findAll(xml)
 
-    def __changeDocStatus2(self,
-                           dateBegin,
-                           hourBegin,
-                           fileFilter="*",
-                           verbose=False):
-        """
-        Change the document status from "aheadofprint" to "no_aheadofprint" if
-        the xml document id is also present in 'workDir'
-        dateBegin - process begin date YYYYMMDD
-        hourBegin - process begin time HH:MM:SS
-        fileFilter - Unix shell-style wildcards for file filtering
-        verbose - if True prints document id into standard output
-        """
-        removed = 0  # Removed xml files
-        rexp = r"<MedlineCitation.+?(\d+)</PMID>"
-
-        # For all documents in medline processing directory
-        listDir = os.listdir(self.xmlProcDir)
-        for f in listDir:
-            if verbose:
-                print(".", end='', flush=True)
-
-            # Searches if there is a mongo document with same id and
-            # updates/deletes it.
-            if fnmatch.fnmatch(f, fileFilter):
-                # Get the xml doc id from file
-                idList = self.__getDocIdList(join(self.xmlProcDir, f),
-                                             regExp=rexp)
-                for id_ in idList:
-                    # If there is such document
-                    query = {"_id": id_}
-                    cursor = self.mdoc.search(query)
-                    if cursor.count() > 0:
-                        # Delete xml physical file
-                        filename = join(self.xmlOutDir, id_ + ".xml")
-                        try:
-                            os.remove(filename)
-                        except OSError:
-                            raise Exception("Remove file [" + filename +
-                                            "] error")
-
-                        # Delete document from mongo doc collection
-                        self.mdoc.deleteDoc(id_)
-
-                        # Update document status from mongo id collection
-                        doc = {"_id": id_}
-                        doc["id"] = id_
-                        doc["date"] = dateBegin
-                        doc["hour"] = hourBegin
-                        doc["status"] = "no_aheadofprint"
-                        doc["process"] = self.process_
-                        doc["owner"] = self.owner
-                        self.mid.replaceDoc(doc)    # update id mongo doc
-                        removed += 1
-
-        if verbose:
-            print("\nTotal: " + str(removed) + " xml files were deleted.")
-
-    def __changeDocStatus3(self,
-                           dateBegin,
-                           hourBegin,
-                           idFile,
-                           verbose=False):
-        """
-        Change the document status from "aheadofprint" to "no_aheadofprint" if
-        the xml document id is also present in 'workDir'
-        dateBegin - process begin date YYYYMMDD
-        hourBegin - process begin time HH:MM:SS
-        idFile - file with all ids of processing xml documents
-                 (one id per line)
-        verbose - if True prints document id into standard output
-        """
-        removed = 0  # Removed xml files
-
-        if verbose:
-            current = 0
-            print("\n", end='', flush=True)
-
-        # For all id of documents in medline processing directory
-        #  idList = Tools.readFile2(idFile)
-        f = open(idFile, encoding="UTF-8")
-        for id_ in f:
-            if verbose:
-                current += 1
-                if current % 10000 == 0:
-                    print(".", end='', flush=True)
-
-            id_ = id_.strip()
-            if len(id_) > 0:
-                # If there is such document
-                query = {"_id": id_}
-                cursor = self.mdoc.search(query)
-                if cursor.count() > 0:
-                    # Delete xml physical file
-                    filename = join(self.xmlOutDir, id_ + ".xml")
-                    try:
-                        os.remove(filename)
-                    except OSError:
-                        raise Exception("Remove file [" + filename +
-                                        "] error")
-
-                    # Delete document from mongo doc collection
-                    self.mdoc.deleteDoc(id_)
-
-                    # Update document status from mongo id collection
-                    doc = {"_id": id_}
-                    doc["id"] = id_
-                    doc["date"] = dateBegin
-                    doc["hour"] = hourBegin
-                    doc["status"] = "no_aheadofprint"
-                    doc["process"] = self.process_
-                    doc["owner"] = self.owner
-                    self.mid.replaceDoc(doc)    # replace id mongo doc
-                    removed += 1
-        f.close()
-
-        if verbose:
-            print("\nTotal: " + str(removed) + " xml files were deleted.")
-
     def process(self,
                 dateBegin,
                 hourBegin,
@@ -438,76 +316,3 @@ class NLM_AheadOfPrint:
         if verbose:
             elapsedTime = datetime.now() - nowDate
             print("\nElapsed time: " + str(elapsedTime))
-
-    def syncWorkDir(self,
-                    dateBegin,
-                    hourBegin,
-                    verbose=True):
-        """
-        Remove from download directory all documents which are also in the
-        xmlProcDir. After that, moves all documents from download directory
-        into xmlProcDir.
-
-        dateBegin - process begin date YYYYMMDD
-        hourBegin - process begin time HH:MM:SS
-        verbose - True if processing progress should be printed into standard
-                  output
-        """
-
-        nowDate = datetime.now()
-
-        # Remove duplicated documents from processing directory and workDir
-        if verbose:
-            print("\nChecking and removing duplicated xml files: ", end="",
-                  flush=True)
-        idFile = join(self.xmlProcDir, "pmid_medline_no_aheadofprint.txt")
-        self.__changeDocStatus3(dateBegin, hourBegin, idFile, verbose)
-
-        # Copy all xml files to the oficial processing directory
-        if verbose:
-            print("\nMoving xml files to the processing directory: ", end="",
-                  flush=True)
-
-        bulkCount = 0
-        bulkRemaining = False
-
-        query = {"status": "aheadofprint"}
-        cursor = self.mid.search(query)
-        for doc in cursor:
-            id_ = doc["id"]
-            # Move xml physical file
-            filename = id_ + ".xml"
-            try:
-                Tools.moveFile(self.xmlOutDir, self.xmlProcDir,
-                               filename, createToDir=False)
-            except OSError:
-                if verbose:
-                    print("Move file:" + filename +
-                          " from:" + self.xmlOutDir +
-                          " to:" + self.xmlProcDir + " error")
-                # raise Exception("Move file:" + filename +
-                #                 " from:" + self.xmlOutDir +
-                #                 " to:" + self.xmlProcDir + " error")
-
-            # Delete document in doc collection
-            self.mdoc.bulkDeleteDoc({"_id": id_})
-
-            # Change document document status from 'aheadofprint' to
-            # 'moved' in id collection.
-            self.mid.bulkUpdateDoc({"id": id_},
-                                   {"status": "moved",
-                                    "date": dateBegin,
-                                    "hour": hourBegin})
-            bulkRemaining = True
-            bulkCount += 1
-            if bulkCount % 100 == 0:
-                self.mid.bulkWrite()
-                bulkRemaining = False
-
-        # Write remaining
-        if bulkRemaining:
-            self.mid.bulkWrite()
-
-        if verbose:
-            elapsedTime = datetime.now() - nowDate
-            print("\n\nElapsed time: " + str(elapsedTime))

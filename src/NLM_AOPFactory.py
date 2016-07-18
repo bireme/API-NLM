@@ -28,7 +28,6 @@ class NLM_AOPFactory:
         self.myMongoId = None
         self.myMongoDoc = None
         self.xmlOutDir = None
-        self.xmlProcDir = None
         self.process = None
         self.owner = None
         self.encoding = "UTF-8"
@@ -55,14 +54,6 @@ class NLM_AOPFactory:
         xmlOutDir - directory path where xml files will be created
         """
         self.xmlOutDir = xmlOutDir
-        return self
-
-    def setXmlProcDir(self, xmlProcDir):
-        """
-
-        xmlProcDir - directory path of xml files of standard medline processing
-        """
-        self.xmlProcDir = xmlProcDir
         return self
 
     def setProcess(self, process):
@@ -100,8 +91,6 @@ class NLM_AOPFactory:
             raise Exception("myMongoDoc is None")
         if self.xmlOutDir is None:
             raise Exception("xmlOutDir is None")
-        if self.xmlProcDir is None:
-            raise Exception("xmlProcDir is None")
         if self.process is None:
             raise Exception("process is None")
         if self.owner is None:

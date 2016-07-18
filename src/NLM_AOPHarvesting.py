@@ -56,28 +56,10 @@ class NLM_AOPHarvesting(Harvesting):
         """
         if self.verbose:
             print("----------------------------------------------------------")
-            print("Step 1 - Downloads and saves NLM Pubmed ahead of print " +
-                  "documents")
+            print("Downloads and saves NLM Pubmed ahead of print documents")
             print("----------------------------------------------------------")
 
         self.ahead.process(dateBegin, hourBegin, self.verbose)
-
-    def moveDocs(self,
-                 dateBegin,
-                 hourBegin):
-        """
-        Move to the working dir the harversted documents.
-
-        dateBegin - process begin date YYYYMMDD
-        hourBegin - process begin time HH:MM:SS
-        """
-        if self.verbose:
-            print("----------------------------------------------------------")
-            print("Step 2 - Copy unique docs to the standard Medline " +
-                  "download dir")
-            print("----------------------------------------------------------")
-
-        self.ahead.syncWorkDir(dateBegin, hourBegin, self.verbose)
 
     def getHarvStatDoc(self,
                        id_,
@@ -103,34 +85,27 @@ class NLM_AOPHarvesting(Harvesting):
         query0 = {"status": "aheadofprint"}
         query1 = {"status": "no_aheadofprint"}
         query2 = {"status": "in process"}
-        query3 = {"status": "moved"}
-        query4 = {"date": dateBegin, "hour": hourBegin,
+        query3 = {"date": dateBegin, "hour": hourBegin,
                   "status": "aheadofprint"}
-        query5 = {"date": dateBegin, "hour": hourBegin,
+        query4 = {"date": dateBegin, "hour": hourBegin,
                   "status": "in process"}
-        query6 = {"date": dateBegin, "hour": hourBegin,
+        query5 = {"date": dateBegin, "hour": hourBegin,
                   "status": "no_aheadofprint"}
-        query7 = {"date": dateBegin, "hour": hourBegin,
-                  "status": "moved"}
         totalAheadDocs = self.mid.search(query0).count()
         totalNoAheadDocs = self.mid.search(query1).count()
         totalInProcessDocs = self.mid.search(query2).count()
-        totalMovedDocs = self.mid.search(query3).count()
-        newAheadDocs = self.mid.search(query4).count()
-        newInProcessDocs = self.mid.search(query5).count()
-        newNoAheadDocs = self.mid.search(query6).count()
-        newMovedDocs = self.mid.search(query7).count()
+        newAheadDocs = self.mid.search(query3).count()
+        newInProcessDocs = self.mid.search(query4).count()
+        newNoAheadDocs = self.mid.search(query5).count()
 
         doc = {"_id": id_,
                "process": process, "owner": owner, "status": status,
                "totAheadDocs": totalAheadDocs,
                "totNoAheadDocs": totalNoAheadDocs,
                "totInProcessDocs": totalInProcessDocs,
-               "totMovedDocs": totalMovedDocs,
                "newAheadDocs": newAheadDocs,
                "newInProcessDocs": newInProcessDocs,
                "newNoAheadDocs": newNoAheadDocs,
-               "newMovedDocs": newMovedDocs,
                "dateBegin": dateBegin, "hourBegin": hourBegin,
                "dateEnd": dateEnd, "hourEnd": hourEnd}
 
@@ -151,16 +126,10 @@ if __name__ == "__main__":
     factory_.setMyMongoId(mid)
     factory_.setMyMongoDoc(mdoc)
     factory_.setXmlOutDir("../xml")
-    factory_.setXmlProcDir("")
 
     harvesting = NLM_AOPHarvesting(factory_, verbose_)
 
-    now1 = datetime.now()
-    date1 = datetime.strftime(now1, "%Y-%m-%d")
-    hour1 = datetime.strftime(now1, "%H:%M:%S")
-    harvesting.harvest(date1, hour1)
-
-    now2 = datetime.now()
-    date2 = datetime.strftime(now2, "%Y-%m-%d")
-    hour2 = datetime.strftime(now2, "%H:%M:%S")
-    harvesting.moveDocs(date2, hour2)
+    now = datetime.now()
+    date = datetime.strftime(now, "%Y-%m-%d")
+    hour = datetime.strftime(now, "%H:%M:%S")
+    harvesting.harvest(date, hour)

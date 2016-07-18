@@ -92,48 +92,13 @@ class ProcessLog:
 
         return doc
 
-    def moveDocs(self):
-        """
-        Move to the working dir the harversted documents.
-
-        Returns a dictionary with harvest moving statistics.
-        """
-        now = datetime.now()
-        dateBegin = datetime.strftime(now, "%Y%m%d")
-        hourBegin = datetime.strftime(now, "%H:%M:%S")
-        id_ = dateBegin + "-" + hourBegin
-        doc = {"_id": id_, "process": self.process + "_moving",
-               "owner": self.owner, "status": "in process",
-               "dataBegin": dateBegin, "hourBegin": hourBegin}
-        self.mongodbLog.saveDoc(doc)
-
-        try:
-            self.harvesting.moveDocs(dateBegin, hourBegin)
-            status = "finished"
-        except (Exception, RuntimeError) as ex:
-            traceback.print_stack()
-            print("Exception/error generated: " + str(ex))
-            status = "broken"
-
-        now2 = datetime.now()
-        dateEnd = datetime.strftime(now2, "%Y%m%d")
-        hourEnd = datetime.strftime(now2, "%H:%M:%S")
-        doc = self.harvesting.getHarvStatDoc(id_,
-                                             self.process + "_moving",
-                                             self.owner, status,
-                                             dateBegin, hourBegin,
-                                             dateEnd, hourEnd)
-        self.mongodbLog.replaceDoc(doc)
-
-        return doc
-
 if __name__ == "__main__":
     # Execute only if run as a script.
 
     verbose_ = True
 
-    mongoHost = "ts01vm.bireme.br"
-    # mongoHost = "mongodb.bireme.br"
+    # mongoHost = "ts01vm.bireme.br"
+    mongoHost = "mongodb.bireme.br"
     dbName = "db_AheadOfPrint"
     mid = MyMongo(dbName, "col_Id", mongoHost)
     mdoc = MyMongo(dbName, "col_Doc", mongoHost)
@@ -145,8 +110,8 @@ if __name__ == "__main__":
     factory_ = NLM_AOPFactory()
     factory_.setMyMongoId(mid)
     factory_.setMyMongoDoc(mdoc)
-    factory_.setXmlOutDir("../xml")
-    factory_.setXmlProcDir("../wrk")
+    factory_.setXmlOutDir("/bases/mdlG4/fasea/aheadofprint")
+    # factory_.setXmlOutDir("../xml")
     factory_.setProcess(process)
     factory_.setOwner(owner)
     harvesting = NLM_AOPHarvesting(factory_, verbose_)
@@ -165,21 +130,7 @@ if __name__ == "__main__":
         print("TotAheadDocs=" + str(result["totAheadDocs"]))
         print("TotNoAheadDocs=" + str(result["totNoAheadDocs"]))
         print("TotInProcessDocs=" + str(result["totInProcessDocs"]))
-        print("TotMovedDocs=" + str(result["totMovedDocs"]))
         print("NewAheadDocs=" + str(result["newAheadDocs"]))
         print("NewInProcessDocs=" + str(result["newInProcessDocs"]))
         print("NewNoAheadDocs=" + str(result["newNoAheadDocs"]))
         print("")
-
-    result = log.moveDocs()
-
-    if verbose_:
-        print("Process=" + process)
-        print("Owner=" + result["owner"])
-        print("Status=" + result["status"])
-        print("DateBegin=" + result["dateBegin"])
-        print("HourBegin=" + result["hourBegin"])
-        print("DateEnd=" + result["dateEnd"])
-        print("HourEnd=" + result["hourEnd"])
-        print("TotMovedDocs=" + str(result["totMovedDocs"]))
-        print("NewMovedDocs=" + str(result["newMovedDocs"]))

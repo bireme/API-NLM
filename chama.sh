@@ -3,4 +3,8 @@
 NOW=$(date +"%Y%m%d")
 HOME=/bases/api-nlm/app
 
-nohup python3 $HOME/ProcessLog.py &> $HOME/nohup/${NOW}.out &
+cd $HOME/src
+
+nohup python3 ProcessLog.py &> $HOME/nohup/${NOW}.out &
+
+cd -
