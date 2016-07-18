@@ -1,7 +1,7 @@
 #!/bin/bash
 
 NOW=$(date +"%Y%m%d")
-HOME=/bases/api-nlm/app
+HOME=/bases/api_nlm/app
 
 cd $HOME/src
 

@@ -99,24 +99,20 @@ class NLM_AheadOfPrint:
 
         return isNew
 
-    def __insertDocs(self,
-                     ids,
-                     dateBegin,
-                     hourBegin,
-                     xdir=".",
-                     encoding="UTF-8",
-                     verbose=False):
+    def __insertIds(self,
+                    ids,
+                    dateBegin,
+                    hourBegin,
+                    verbose=False):
         """
         For each id from a list of ids, adds a new id document into mongo id
-        collection, add a new document into mongo xml collection and creates a
-        new file with xml content.
+        collection.
 
         ids - a list of NLM document ids
         dateBegin - process begin date YYYYMMDD
         hourBegin - process begin time HH:MM:SS
-        xdir - output file directory
-        encoding - output file encoding
         verbose - if True prints the document is inserted
+        Returns a list of ids that are new to the collection 'id'
         """
         newDocs = []
         id_size = len(ids)
@@ -151,8 +147,29 @@ class NLM_AheadOfPrint:
             self.mid.bulkWrite()
             bulkRemaining = False
 
-        if ((bulkCount + notWrittenDocs) != id_size):
+        if (bulkCount + notWrittenDocs) != id_size:
             raise Exception("__insertDocs: some doc ids were not written")
+
+        return newDocs
+
+    def __insertDocContents(self,
+                            newDocs,
+                            dateBegin,
+                            hourBegin,
+                            xdir=".",
+                            encoding="UTF-8",
+                            verbose=False):
+        """
+        For each id from a list of ids, add a new document into mongo xml
+        collection and creates a new file with xml content.
+
+        newDocs - a list of NLM document ids
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        xdir - output file directory
+        encoding - output file encoding
+        verbose - if True prints the document is inserted
+        """
 
         newDocLen = len(newDocs)
         # print("\nNumero de ids novos: " + str(newDocLen))
@@ -198,6 +215,29 @@ class NLM_AheadOfPrint:
             # print("\nDocumentos escritos: " + str(bulkCount))
             if verbose:
                 print()  # to print a new line
+
+    def __insertDocs(self,
+                     ids,
+                     dateBegin,
+                     hourBegin,
+                     xdir=".",
+                     encoding="UTF-8",
+                     verbose=False):
+        """
+        For each id from a list of ids, adds a new id document into mongo id
+        collection, add a new document into mongo xml collection and creates a
+        new file with xml content.
+
+        ids - a list of NLM document ids
+        dateBegin - process begin date YYYYMMDD
+        hourBegin - process begin time HH:MM:SS
+        xdir - output file directory
+        encoding - output file encoding
+        verbose - if True prints the document is inserted
+        """
+        newDocs = self.__insertIds(ids, dateBegin, hourBegin, verbose)
+        self.__insertDocContents(newDocs, dateBegin, hourBegin, xdir,
+                                 encoding, verbose)
 
     def __checkInProcess(self):
         """Check if there are documents with "in process" status."""
